@@ -8,17 +8,20 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import com.bandme.bandmeappmobile.ui.screen.LoginEmailScren
 import com.bandme.bandmeappmobile.ui.theme.BandmeAppMobileTheme
+import com.bandme.bandmeappmobile.ui.viewModel.LoginViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : ComponentActivity() {
+
+    private val loginViewModel: LoginViewModel by viewModel()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             BandmeAppMobileTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(color = MaterialTheme.colors.background) {
-                    Greeting("Android")
-                }
+                LoginEmailScren(viewModel = loginViewModel)
             }
         }
     }

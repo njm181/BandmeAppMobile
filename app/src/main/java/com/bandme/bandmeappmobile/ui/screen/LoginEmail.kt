@@ -37,6 +37,7 @@ fun LoginEmailScren(
                 println("======= SUCESS ========")
                 //maybe true or false
                 if (response.isEmailValidated){
+                    println("EMAIL GUARDADO ======> ${viewModel?.lastEmailEntered?.value}")
                     //validateEmailResult = response.isEmailValidated
                     if (isError) isError = false
                     if (isFailure) isFailure = false

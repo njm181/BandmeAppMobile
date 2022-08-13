@@ -10,6 +10,14 @@ import kotlinx.coroutines.launch
 
 class LoginViewModel (private val validateEmailUseCase: ValidateEmailUseCase): ViewModel() {
 
+    private val _lastEmailEntered = MutableStateFlow(value = "")
+    val lastEmailEntered: StateFlow<String> = _lastEmailEntered
+
+    fun setLastEmailEntered(email: String){
+        _lastEmailEntered.value = email
+    }
+
+
     private val _validateEmailStateFlow = MutableStateFlow<ValidateEmailState>(value = ValidateEmailState.Initial)
     val validateEmailStateFlow: StateFlow<ValidateEmailState> = _validateEmailStateFlow
 
@@ -23,6 +31,7 @@ class LoginViewModel (private val validateEmailUseCase: ValidateEmailUseCase): V
             _validateEmailStateFlow.value = ValidateEmailState.Loading
             val result = validateEmailUseCase.invoke(email = email)
             if (result != null){
+                if (result) _lastEmailEntered.value = email
                _validateEmailStateFlow.value = ValidateEmailState.Success(existEmail = result)
             } else {
                 _validateEmailStateFlow.value = ValidateEmailState.Failure(errorMessage = "No pudimos validar tu email, vuelve a intentarlo más tarde.")

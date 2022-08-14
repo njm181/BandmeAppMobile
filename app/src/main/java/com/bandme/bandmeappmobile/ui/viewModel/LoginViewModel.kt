@@ -17,6 +17,19 @@ class LoginViewModel (private val validateEmailUseCase: ValidateEmailUseCase): V
         _lastEmailEntered.value = email
     }
 
+    private val _registerPassword = MutableStateFlow(value = "")
+    val registerPassword: StateFlow<String> = _registerPassword
+
+    fun setRegisterPassword(password: String){
+        _registerPassword.value = password
+    }
+
+    private val _isNewUser = MutableStateFlow(value = false)
+    val isNewUser: StateFlow<Boolean> = _isNewUser
+
+    fun setIsNewUser(isNew: Boolean){
+        _isNewUser.value = isNew
+    }
 
     private val _validateEmailStateFlow = MutableStateFlow<ValidateEmailState>(value = ValidateEmailState.Initial)
     val validateEmailStateFlow: StateFlow<ValidateEmailState> = _validateEmailStateFlow

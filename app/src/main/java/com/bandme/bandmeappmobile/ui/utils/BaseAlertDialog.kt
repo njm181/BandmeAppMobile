@@ -19,7 +19,7 @@ import com.bandme.bandmeappmobile.ui.theme.BandmeAppMobileTheme
 fun BaseAlertDialog(
     isVisible: Boolean = false,
     onDismissAction: () -> Unit,
-    onAffirmativeAction: () -> Unit,
+    onAffirmativeAction: () -> Unit = {},
     title: String = "",
     isFailure: Boolean = false,
     description: String = "",

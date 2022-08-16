@@ -1,4 +1,4 @@
-package com.bandme.bandmeappmobile.data.response
+package com.bandme.bandmeappmobile.data.dto.login.response
 
 import com.google.gson.annotations.SerializedName
 

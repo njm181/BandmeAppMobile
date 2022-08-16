@@ -8,7 +8,19 @@ sealed class ValidateEmailState(
 ){
     object Initial: ValidateEmailState(email = "")
     object Loading: ValidateEmailState(isLoading = true)
-    class Success(private val existEmail: Boolean) : ValidateEmailState(isEmailValidated = existEmail)
-    class Failure(private val errorMessage: String) : ValidateEmailState(message = errorMessage)
+    class Success(existEmail: Boolean) : ValidateEmailState(isEmailValidated = existEmail)
+    class Failure(errorMessage: String) : ValidateEmailState(message = errorMessage)
+
+}
+
+sealed class ValidateLoginState(
+    val userValidated: Boolean = false,
+    val isLoading: Boolean = false,
+    val message: String = ""
+){
+    object Initial: ValidateLoginState()
+    object Loading: ValidateLoginState(isLoading = true)
+    class Success(isValidated: Boolean) : ValidateLoginState(userValidated = isValidated)
+    class Failure(errorMessage: String) : ValidateLoginState(message = errorMessage)
 
 }

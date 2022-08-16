@@ -1,13 +1,12 @@
 package com.bandme.bandmeappmobile.ui.screen
 
 import android.content.res.Configuration
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -19,21 +18,56 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bandme.bandmeappmobile.R
 import com.bandme.bandmeappmobile.ui.theme.BandmeAppMobileTheme
+import com.bandme.bandmeappmobile.ui.theme.Gray600
 import com.bandme.bandmeappmobile.ui.utils.BaseAlertDialog
+import com.bandme.bandmeappmobile.ui.utils.ValidateLoginState
 import com.bandme.bandmeappmobile.ui.viewModel.LoginViewModel
 
 @Composable
 fun LoginPasswordScreen(
     viewModel: LoginViewModel
 ) {
-    //si isNewUser == true, deberia guardar la password en el state flow y continuar a seleccionar el tipo de usuario
-    //si isNewUser == false deberia hacer la pegada al servicio de login, ahi obtengo la respuesta
-    //y manipulo si isError by service por contrasena incorrecta
     //agregar reset password
+
+    var isWrongPassword by remember { mutableStateOf(false) }
+    var isFailure by remember { mutableStateOf(true) }
+
+    var result = viewModel.validateLoginStateFlow.collectAsState()
+    result.value.let { response ->
+        println("RESPUESTA ===> : $response")
+        when(response){
+            is ValidateLoginState.Loading, ValidateLoginState.Initial -> {
+                //progressbar
+                println("======= LOADING ========")
+            }
+            is ValidateLoginState.Success -> {
+                println("======= SUCESS ========")
+                //maybe true or false
+                if (response.userValidated){
+                    //if true, go to dashboard
+                    isWrongPassword = false
+                    println("LOGIN SUCCESSED==========>GO TO DASHBOARD")
+                } else {
+                    //else false, show error for wrong password
+                    isWrongPassword = true
+                }
+
+            }
+            is ValidateLoginState.Failure -> {
+                //if is failure, should be shown a toast or modal with the error message
+                println("======= FAILURE ========")
+                isFailure = true
+            }
+            else -> {}
+        }
+    }
 
     LoginPasswordContent(
         isNewUser = viewModel.isNewUser.collectAsState().value,
-        onRegisterPassword = { viewModel.setRegisterPassword(it) }
+        onRegisterPassword = { viewModel.setRegisterPassword(it) },
+        onValidateUserLogin = { viewModel.validateUserLogin(it) },
+        isWrongPassword = isWrongPassword,
+        isFailure = isFailure
 
     )
 }
@@ -43,7 +77,9 @@ fun LoginPasswordContent(
     maxLength: Int = 6,
     isNewUser: Boolean = false,
     onRegisterPassword: (String) -> Unit = {},
-    isWrongPassword: Boolean = false
+    isWrongPassword: Boolean = false,
+    onValidateUserLogin: (String) -> Unit = {},
+    isFailure: Boolean = false
 ) {
     var password by remember { mutableStateOf(TextFieldValue("")) }
     var repeatedPassword by remember { mutableStateOf(TextFieldValue("")) }
@@ -52,6 +88,19 @@ fun LoginPasswordContent(
     var comparePassword by remember { mutableStateOf(false) }
     var enableButton by remember { mutableStateOf(false) }
 
+    var openDialog by remember { mutableStateOf(isFailure) }
+
+    BaseAlertDialog(
+        isVisible = openDialog,
+        isFailure = isFailure,
+        onDismissAction = {
+            openDialog = !openDialog
+            println("=============> CONFIRM ACTION: GO TO WELCOME <=============")
+                          },
+        title = "Atención",
+        description = "No se pudó validar el inicio de sesión. Por favor intente más tarde.",
+        affirmativeTitle = "Cerrar",
+    )
 
     Column(
         Modifier
@@ -138,7 +187,19 @@ fun LoginPasswordContent(
                         }
                     )
                 }
+            }else{
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    Text(
+                        text = "Olvidaste tu contraseña?",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Gray600,
+                        modifier = Modifier.clickable { println("CLICK OLVIDASTE LA PASSWORD") }
+                    )
+                }
             }
+
+
             Spacer(modifier = Modifier.height(8.dp))
 
             if (comparePassword)
@@ -162,6 +223,8 @@ fun LoginPasswordContent(
                     if (comparePassword){
                         onRegisterPassword(password.text)
                     }
+                }else{
+                    onValidateUserLogin(password.text)
                 }
             },
             modifier = Modifier
@@ -174,7 +237,7 @@ fun LoginPasswordContent(
     }
 }
 
-@Preview(name = "default theme password")
+@Preview(name = "default theme pass")
 @Preview(name = "dark theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun LoginPasswordContentPreview() {

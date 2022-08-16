@@ -1,4 +1,4 @@
-package com.bandme.bandmeappmobile.domain.useCase
+package com.bandme.bandmeappmobile.domain.useCase.login
 
 import com.bandme.bandmeappmobile.data.repositoryImpl.LoginRepositoryImpl
 

@@ -18,7 +18,7 @@ import com.bandme.bandmeappmobile.ui.utils.ValidateEmailState
 import com.bandme.bandmeappmobile.ui.viewModel.LoginViewModel
 
 @Composable
-fun LoginEmailScren(
+fun LoginEmailScreen(
     viewModel: LoginViewModel? = null
 ) {
     var result = viewModel?.validateEmailStateFlow?.collectAsState()
@@ -43,7 +43,6 @@ fun LoginEmailScren(
                     if (isFailure) isFailure = false
                 } else {
                     isError = true
-                    //openDialog = true
                 }
 
             }
@@ -54,8 +53,8 @@ fun LoginEmailScren(
             }
             else -> {}
         }
-
     }
+
     LoginEmailContent(
         onValidateEmail = { viewModel?.validateExistEmail(it) },
         isEmailValidated = validateEmailResult,

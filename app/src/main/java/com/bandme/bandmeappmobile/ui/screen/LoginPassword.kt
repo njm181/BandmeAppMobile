@@ -25,7 +25,9 @@ import com.bandme.bandmeappmobile.ui.viewModel.LoginViewModel
 
 @Composable
 fun LoginPasswordScreen(
-    viewModel: LoginViewModel
+    viewModel: LoginViewModel,
+    onNavigateToSuccess: () -> Unit = {},
+    onBackPress: () -> Unit = {}
 ) {
     //agregar reset password
 
@@ -47,6 +49,7 @@ fun LoginPasswordScreen(
                     //if true, go to dashboard
                     isWrongPassword = false
                     println("LOGIN SUCCESSED==========>GO TO DASHBOARD")
+                    //navigate to success
                 } else {
                     //else false, show error for wrong password
                     isWrongPassword = true

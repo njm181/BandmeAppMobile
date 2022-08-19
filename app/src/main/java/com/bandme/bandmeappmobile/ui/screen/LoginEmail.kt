@@ -19,7 +19,9 @@ import com.bandme.bandmeappmobile.ui.viewModel.LoginViewModel
 
 @Composable
 fun LoginEmailScreen(
-    viewModel: LoginViewModel? = null
+    viewModel: LoginViewModel? = null,
+    onNavigateToSuccess: () -> Unit = {},
+    onBackPress: () -> Unit = {}
 ) {
     var result = viewModel?.validateEmailStateFlow?.collectAsState()
     var validateEmailResult by remember { mutableStateOf(false) }
@@ -41,6 +43,7 @@ fun LoginEmailScreen(
                     //validateEmailResult = response.isEmailValidated
                     if (isError) isError = false
                     if (isFailure) isFailure = false
+                    //navigate to success
                 } else {
                     isError = true
                 }

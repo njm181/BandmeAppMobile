@@ -2,6 +2,7 @@ package com.bandme.bandmeappmobile.data.service
 
 import com.bandme.bandmeappmobile.data.dto.login.request.ValidateEmailRequest
 import com.bandme.bandmeappmobile.data.dto.login.request.ValidateLoginRequest
+import com.bandme.bandmeappmobile.data.dto.login.response.ValidateEmailResetPasswordResponse
 import com.bandme.bandmeappmobile.data.dto.login.response.ValidateEmailResponse
 import com.bandme.bandmeappmobile.data.dto.login.response.ValidateLoginResponse
 import retrofit2.Response
@@ -20,4 +21,8 @@ interface LoginService {
         @Body validateLoginRequest: ValidateLoginRequest
     ) : Response<ValidateLoginResponse>
 
+    @POST("validate/email-reset")
+    suspend fun validateEmailResetPassword(
+        @Body email: ValidateEmailRequest
+    ) : Response<ValidateEmailResetPasswordResponse>
 }

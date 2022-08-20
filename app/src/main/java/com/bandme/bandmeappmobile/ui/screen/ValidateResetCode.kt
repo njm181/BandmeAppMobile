@@ -3,10 +3,7 @@ package com.bandme.bandmeappmobile.ui.screen
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -17,16 +14,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bandme.bandmeappmobile.ui.theme.BandmeAppMobileTheme
 import com.bandme.bandmeappmobile.ui.theme.Gray700
+import com.bandme.bandmeappmobile.ui.utils.ValidateCodeResetPasswordState
 import com.bandme.bandmeappmobile.ui.utils.ValidateEmailResetPasswordState
 import com.bandme.bandmeappmobile.ui.viewModel.LoginViewModel
 
 @Composable
-fun ValidateResetEmailScreen(
+fun ValidateResetCodeScreen(
     viewModel: LoginViewModel? = null,
     onNavigateToSuccess: () -> Unit = {},
     onBackPress: () -> Unit = {}
 ) {
-    var result = viewModel?.validateEmailResetPasswordStateFlow?.collectAsState()
+
+    var result = viewModel?.validateCodeResetPasswordStateFlow?.collectAsState()
     var validateEmailResult by remember { mutableStateOf(false) }
     var isError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
@@ -34,16 +33,18 @@ fun ValidateResetEmailScreen(
     result?.value.let { response ->
         println("RESPUESTA ===> : $response")
         when(response){
-            is ValidateEmailResetPasswordState.Loading, ValidateEmailResetPasswordState.Initial -> {
+            is ValidateCodeResetPasswordState.Loading, ValidateCodeResetPasswordState.Initial -> {
                 //progressbar
                 println("======= LOADING ========")
             }
-            is ValidateEmailResetPasswordState.Success -> {
+            is ValidateCodeResetPasswordState.Success -> {
                 println("======= SUCESS ========")
                 //maybe true or false
-                if (response.emailValid && response.sentEmail){
-                    println("EMAIL GUARDADO ======> ${viewModel?.lastEmailResetPasswordEntered?.value}")
-                    validateEmailResult = response.emailValid
+                if (response.isValid){
+                    println("JWT GUARDADO ======> ${response.jwt}")
+                    /*println("EMAIL GUARDADO ======> ${viewModel?.lastEmailResetPasswordEntered?.value}")
+                    validateEmailResult = response.emailValid*/
+                    viewModel?.setIsResetPassword(isResetPassword = true)
                     if (isError) isError = false
                     //navigate to success
                 } else {
@@ -52,7 +53,7 @@ fun ValidateResetEmailScreen(
                 }
 
             }
-            is ValidateEmailResetPasswordState.Failure -> {
+            is ValidateCodeResetPasswordState.Failure -> {
                 //if is failure, should be shown a toast or modal with the error message
                 println("======= FAILURE ========")
                 isError = true
@@ -62,54 +63,54 @@ fun ValidateResetEmailScreen(
         }
     }
 
-    ValidateResetEmailContent(
-        onValidateEmail = { viewModel?.validateEmailResetPassword(it) },
-        isError = isError,
+    ValidateResetCodeContent(
+        onValidateResetCode = { viewModel?.validateCodeResetPassword(it) },
+        isWrongCode = isError,
         errorMessage = errorMessage
     )
 }
 
 @Composable
-fun ValidateResetEmailContent(
-    onValidateEmail: (String) -> Unit,
-    isError: Boolean = false,
-    maxCharacters: Int = 60,
+fun ValidateResetCodeContent(
+    isWrongCode: Boolean = false,
     errorMessage: String = "",
-){
-    var email by remember { mutableStateOf(TextFieldValue("")) }
+    onValidateResetCode: (String) -> Unit = {}
+) {
+    var code by remember { mutableStateOf(TextFieldValue("")) }
     var enableButton by remember { mutableStateOf(false) }
 
     Column(
         Modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
+        verticalArrangement = Arrangement.SpaceBetween) {
         Column() {
-            Text(text = "Reiniciar contraseña", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = Gray700)
-            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = "En el email que ingreso recibirá un código de 4 digitos", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = Gray700)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Row(Modifier.fillMaxWidth()) {
                 OutlinedTextField(
-                    value = email,
+                    value = code,
                     onValueChange = { newText ->
-                        if (newText.text.length <= maxCharacters){
-                            email = newText
-                            enableButton = email.text.contains("@") && email.text.isNotEmpty()
+                        if(newText.text.length <= 4){
+                            code = newText
                         }
+                        enableButton = newText.text.length == 4
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text(text = "Ingrese su email") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    isError = isError,
+                    label = { Text(text = "Ingrese su código aqui") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    isError = isWrongCode,
                     singleLine = true,
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
-            if(isError) Text(text = errorMessage, color = MaterialTheme.colors.error)
+            if(isWrongCode) Text(text = errorMessage, color = MaterialTheme.colors.error)
         }
         Button(
             onClick = {
-                onValidateEmail(email.text)
+                onValidateResetCode(code.text)
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -119,18 +120,17 @@ fun ValidateResetEmailContent(
             Text(text = "Continuar")
         }
     }
+
 }
 
-
-@Preview(name = "default theme reset")
+@Preview(name = "default")
 @Preview(name = "dark theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-fun ValidateResetEmailContentPreview() {
-    BandmeAppMobileTheme {
-        ValidateResetEmailContent(
-            onValidateEmail = {},
-            isError = true,
-            errorMessage = "No pudimos validar tu email, vuelve a intentarlo más tarde."
+fun ValidateResetCodeContentPreview() {
+    BandmeAppMobileTheme() {
+        ValidateResetCodeContent(
+            isWrongCode = true,
+            errorMessage = "No pudimos validar tu código, vuelve a intentarlo más tarde."
         )
     }
 }

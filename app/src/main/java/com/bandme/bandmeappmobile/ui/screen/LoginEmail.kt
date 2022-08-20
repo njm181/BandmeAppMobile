@@ -62,7 +62,8 @@ fun LoginEmailScreen(
         onValidateEmail = { viewModel?.validateExistEmail(it) },
         isEmailValidated = validateEmailResult,
         isError = isError,
-        isFailure = isFailure
+        isFailure = isFailure,
+        setIsNewUser = { viewModel?.setIsNewUser(it) }
     )
 }
 
@@ -73,6 +74,7 @@ fun LoginEmailContent(
     isError: Boolean = false,
     isFailure: Boolean = false,
     maxCharacters: Int = 60,
+    setIsNewUser: (Boolean) -> Unit = {}
 ){
     var email by remember { mutableStateOf(TextFieldValue("")) }
     var openDialog by remember { mutableStateOf(isError) }
@@ -88,7 +90,11 @@ fun LoginEmailContent(
             isVisible = openDialog,
             isFailure = isFailure,
             onDismissAction = { openDialog = !openDialog },
-            onAffirmativeAction = { println("CONFIRM ACTION <=============") },
+            onAffirmativeAction = {
+                println("CONFIRM ACTION <=============")
+                setIsNewUser(true)
+                //go to create password
+                                  },
             title = "Atención",
             description = "El email ingresado no existe o es incorrecto." +
                     " \nSi ya esta registrado vuelva a ingresarlo correctamente. " +

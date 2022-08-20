@@ -21,6 +21,7 @@ import com.bandme.bandmeappmobile.ui.theme.BandmeAppMobileTheme
 import com.bandme.bandmeappmobile.ui.theme.Gray600
 import com.bandme.bandmeappmobile.ui.utils.BaseAlertDialog
 import com.bandme.bandmeappmobile.ui.utils.ValidateLoginState
+import com.bandme.bandmeappmobile.ui.utils.ValidateResetPasswordState
 import com.bandme.bandmeappmobile.ui.viewModel.LoginViewModel
 
 @Composable
@@ -32,8 +33,12 @@ fun LoginPasswordScreen(
     //agregar reset password
 
     var isWrongPassword by remember { mutableStateOf(false) }
-    var isFailure by remember { mutableStateOf(true) }
+    var isFailure by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+    var isResetFailure by remember { mutableStateOf(false) }
+    var isResetPassword by remember { mutableStateOf(false) }
 
+    /**region Login or Create Password*/
     var result = viewModel.validateLoginStateFlow.collectAsState()
     result.value.let { response ->
         println("RESPUESTA ===> : $response")
@@ -64,14 +69,54 @@ fun LoginPasswordScreen(
             else -> {}
         }
     }
+    /**endregion Login or Create Password*/
+
+    /**region Reset Password*/
+    var resultResetPassword = viewModel.validateResetPasswordStateFlow.collectAsState()
+    resultResetPassword.value.let { response ->
+        println("RESPUESTA ===> : $response")
+        when(response){
+            is ValidateResetPasswordState.Loading, ValidateResetPasswordState.Initial -> {
+                //progressbar
+                println("======= LOADING ========")
+            }
+            is ValidateResetPasswordState.Success -> {
+                println("======= SUCESS ========")
+                //maybe true or false
+                if (response.wasUpdated){
+                    //if true, go to dashboard
+                    isResetFailure = false
+                    println("RESET PASSWORD SUCCESSED==========>GO TO DASHBOARD")
+                    //navigate to success
+                } else {
+                    //else false, show error for wrong password
+                    isResetFailure = true
+                    errorMessage = errorMessage
+                }
+
+            }
+            is ValidateResetPasswordState.Failure -> {
+                //if is failure, should be shown a toast or modal with the error message
+                println("======= FAILURE ========")
+                //isFailure = true
+                errorMessage = errorMessage
+                isResetFailure = true
+            }
+            else -> {}
+        }
+    }
+    /**endregion Reset Password*/
 
     LoginPasswordContent(
         isNewUser = viewModel.isNewUser.collectAsState().value,
         onRegisterPassword = { viewModel.setRegisterPassword(it) },
         onValidateUserLogin = { viewModel.validateUserLogin(it) },
         isWrongPassword = isWrongPassword,
-        isFailure = isFailure
-
+        isFailure = isFailure,
+        errorMessage = errorMessage,
+        isResetFailure = isResetFailure,
+        isResetPassword = viewModel.isResetPassword.collectAsState().value,
+        onValidateResetPassword = { viewModel.validateResetPassword(it) }
     )
 }
 
@@ -82,7 +127,11 @@ fun LoginPasswordContent(
     onRegisterPassword: (String) -> Unit = {},
     isWrongPassword: Boolean = false,
     onValidateUserLogin: (String) -> Unit = {},
-    isFailure: Boolean = false
+    isFailure: Boolean = false,
+    isResetPassword: Boolean = false,
+    errorMessage: String = "",
+    isResetFailure: Boolean = false,
+    onValidateResetPassword: (String) -> Unit = {},
 ) {
     var password by remember { mutableStateOf(TextFieldValue("")) }
     var repeatedPassword by remember { mutableStateOf(TextFieldValue("")) }
@@ -112,7 +161,7 @@ fun LoginPasswordContent(
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Column() {
-            if (isNewUser)
+            if (isNewUser || isResetPassword)
                 Text(
                     text = "La longitud de la contraseña debe ser de 6 caracteres",
                     fontSize = 16.sp,
@@ -159,7 +208,7 @@ fun LoginPasswordContent(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            if (isNewUser){
+            if (isNewUser || isResetPassword){
                 Row(Modifier.fillMaxWidth()) {
                     OutlinedTextField(
                         value = repeatedPassword,
@@ -211,9 +260,16 @@ fun LoginPasswordContent(
                     color = MaterialTheme.colors.onError,
                     fontSize = 14.sp
                 )
+            if (isResetFailure)
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colors.onError,
+                    fontSize = 14.sp
+                )
         }
 
-        enableButton = if (isNewUser){
+        enableButton = if (isNewUser || isResetPassword){
             password.text.length == 6 && repeatedPassword.text.length == 6
         }else{
             password.text.length == 6
@@ -221,9 +277,13 @@ fun LoginPasswordContent(
 
         Button(
             onClick = {
-                if (isNewUser){
+                if (isNewUser || isResetPassword){
                     comparePassword = password.text != repeatedPassword.text
-                    if (comparePassword){
+
+                    if (!comparePassword && isResetPassword){
+                        onValidateResetPassword(password.text)
+                    }
+                    if (!comparePassword && !isResetPassword){
                         onRegisterPassword(password.text)
                     }
                 }else{
@@ -245,6 +305,10 @@ fun LoginPasswordContent(
 @Composable
 fun LoginPasswordContentPreview() {
     BandmeAppMobileTheme {
-        LoginPasswordContent()
+        LoginPasswordContent(
+            isResetPassword = true,
+            isResetFailure = true,
+            errorMessage = "No pudimos validar tu nueva clave, vuelve a intentarlo más tarde."
+        )
     }
 }

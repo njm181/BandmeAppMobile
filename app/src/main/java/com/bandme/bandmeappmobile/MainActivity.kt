@@ -7,6 +7,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.bandme.bandmeappmobile.ui.screen.LoginPasswordScreen
+import com.bandme.bandmeappmobile.ui.screen.ValidateResetCodeScreen
 import com.bandme.bandmeappmobile.ui.screen.ValidateResetEmailScreen
 import com.bandme.bandmeappmobile.ui.theme.BandmeAppMobileTheme
 import com.bandme.bandmeappmobile.ui.viewModel.LoginViewModel
@@ -21,8 +22,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             BandmeAppMobileTheme {
                 //LoginEmailScren(viewModel = loginViewModel)
-                //LoginPasswordScreen(viewModel = loginViewModel)
-                ValidateResetEmailScreen(viewModel = loginViewModel)
+                LoginPasswordScreen(viewModel = loginViewModel)
+                //ValidateResetEmailScreen(viewModel = loginViewModel)
+                //ValidateResetCodeScreen(viewModel = loginViewModel)
             }
         }
     }

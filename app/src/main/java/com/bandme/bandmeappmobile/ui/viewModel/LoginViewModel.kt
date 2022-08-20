@@ -2,12 +2,8 @@ package com.bandme.bandmeappmobile.ui.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.bandme.bandmeappmobile.domain.useCase.login.ValidateEmailResetPasswordUseCase
-import com.bandme.bandmeappmobile.domain.useCase.login.ValidateEmailUseCase
-import com.bandme.bandmeappmobile.domain.useCase.login.ValidateLoginUseCase
-import com.bandme.bandmeappmobile.ui.utils.ValidateEmailResetPasswordState
-import com.bandme.bandmeappmobile.ui.utils.ValidateEmailState
-import com.bandme.bandmeappmobile.ui.utils.ValidateLoginState
+import com.bandme.bandmeappmobile.domain.useCase.login.*
+import com.bandme.bandmeappmobile.ui.utils.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -15,7 +11,9 @@ import kotlinx.coroutines.launch
 class LoginViewModel (
     private val validateEmailUseCase: ValidateEmailUseCase,
     private val validateLoginUseCase: ValidateLoginUseCase,
-    private val validateEmailResetPasswordUseCase: ValidateEmailResetPasswordUseCase
+    private val validateEmailResetPasswordUseCase: ValidateEmailResetPasswordUseCase,
+    private val validateCodeResetPasswordUseCase: ValidateCodeResetPasswordUseCase,
+    private val validateResetPasswordUseCase: ValidateResetPasswordUseCase
     ): ViewModel() {
 
     //region State Flows
@@ -44,6 +42,17 @@ class LoginViewModel (
         _isNewUser.value = isNew
     }
 
+    private val _isResetPassword = MutableStateFlow(value = false)
+    val isResetPassword: StateFlow<Boolean> = _isResetPassword
+
+    fun setIsResetPassword(isResetPassword: Boolean){
+        _isResetPassword.value = isResetPassword
+    }
+
+    private val _jwt = MutableStateFlow(value = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxZmRkY2U5ZjI0YjE0NzY0YjQzNThmOSIsImlhdCI6MTY2MTAwMTY1MCwiZXhwIjoxNjYxOTAxNjUwfQ.oHPpkZYiZkNPzH7FY6YnP-lh8Va2Z3rYGY3YAKWWXpQ")
+    val jwt: StateFlow<String> = _jwt
+
+
     private val _validateEmailStateFlow = MutableStateFlow<ValidateEmailState>(value = ValidateEmailState.Initial)
     val validateEmailStateFlow: StateFlow<ValidateEmailState> = _validateEmailStateFlow
 
@@ -52,6 +61,12 @@ class LoginViewModel (
 
     private val _validateEmailResetPasswordStateFlow = MutableStateFlow<ValidateEmailResetPasswordState>(value = ValidateEmailResetPasswordState.Initial)
     val validateEmailResetPasswordStateFlow: StateFlow<ValidateEmailResetPasswordState> = _validateEmailResetPasswordStateFlow
+
+    private val _validateCodeResetPasswordStateFlow = MutableStateFlow<ValidateCodeResetPasswordState>(value = ValidateCodeResetPasswordState.Initial)
+    val validateCodeResetPasswordStateFlow: StateFlow<ValidateCodeResetPasswordState> = _validateCodeResetPasswordStateFlow
+
+    private val _validateResetPasswordStateFlow = MutableStateFlow<ValidateResetPasswordState>(value = ValidateResetPasswordState.Initial)
+    val validateResetPasswordStateFlow: StateFlow<ValidateResetPasswordState> = _validateResetPasswordStateFlow
 
     //endregion
 
@@ -64,8 +79,16 @@ class LoginViewModel (
         validateLogin(password = password)
     }
 
-    fun validateResetPassword(email: String){
-        validateEmailResetPassword(email = email)
+    fun validateEmailResetPassword(email: String){
+        this.validateUserEmailResetPassword(email = email)
+    }
+
+    fun validateCodeResetPassword(code: String){
+        validateUserCodeResetPassword(code = code)
+    }
+
+    fun validateResetPassword(newPassword: String){
+        validateUserResetPassword(newPassword = newPassword)
     }
 
     //endregion
@@ -101,7 +124,7 @@ class LoginViewModel (
         }
     }
 
-    private fun validateEmailResetPassword(email: String) {
+    private fun validateUserEmailResetPassword(email: String) {
         viewModelScope.launch {
             _validateEmailResetPasswordStateFlow.value = ValidateEmailResetPasswordState.Loading
             val result = validateEmailResetPasswordUseCase.invoke(email = email)
@@ -115,5 +138,33 @@ class LoginViewModel (
         }
     }
 
+    private fun validateUserCodeResetPassword(code: String) {
+        viewModelScope.launch {
+            _validateCodeResetPasswordStateFlow.value = ValidateCodeResetPasswordState.Loading
+            val result = validateCodeResetPasswordUseCase.invoke(code = code)
+            if (result != null && result.isValid){
+                //todo almacenar el JWT en shared preferences usar KOIN y el email en el stateflow
+                _jwt.value = result.jwt
+                _validateCodeResetPasswordStateFlow.value = ValidateCodeResetPasswordState.Success(isValidated = result.isValid, token = result.jwt)
+            } else {
+                val message = if (!result?.message.isNullOrEmpty()) result?.message else "No pudimos validar tu código, vuelve a intentarlo más tarde."
+                _validateCodeResetPasswordStateFlow.value = ValidateCodeResetPasswordState.Failure(errorMessage = message.orEmpty())
+            }
+        }
+    }
+
+    private fun validateUserResetPassword(newPassword: String) {
+        viewModelScope.launch {
+            _validateResetPasswordStateFlow.value = ValidateResetPasswordState.Loading
+            val result = validateResetPasswordUseCase.invoke(newPassword = newPassword, authorization = jwt.value)
+            if (result != null && result.wasUpdated){
+                //todo almacenar el JWT en shared preferences usar KOIN y el email en el stateflow
+                _validateResetPasswordStateFlow.value = ValidateResetPasswordState.Success(updated = result.wasUpdated, token = result.jwt)
+            } else {
+                val message = if (!result?.message.isNullOrEmpty()) result?.message else "No pudimos validar tu nueva clave, vuelve a intentarlo más tarde."
+                _validateResetPasswordStateFlow.value = ValidateResetPasswordState.Failure(errorMessage = message.orEmpty())
+            }
+        }
+    }
     //endregion
 }

@@ -34,3 +34,27 @@ sealed class ValidateEmailResetPasswordState(
     class Success(isValidated: Boolean, wasSentEmail: Boolean) : ValidateEmailResetPasswordState(emailValid = isValidated, sentEmail = wasSentEmail)
     class Failure(errorMessage: String) : ValidateEmailResetPasswordState(message = errorMessage)
 }
+
+sealed class ValidateCodeResetPasswordState(
+    val isValid: Boolean = false,
+    val isLoading: Boolean = false,
+    val jwt: String = "",
+    val message: String = ""
+){
+    object Initial: ValidateCodeResetPasswordState()
+    object Loading: ValidateCodeResetPasswordState(isLoading = true)
+    class Success(isValidated: Boolean, token: String) : ValidateCodeResetPasswordState(isValid = isValidated, jwt = token)
+    class Failure(errorMessage: String) : ValidateCodeResetPasswordState(message = errorMessage)
+}
+
+sealed class ValidateResetPasswordState(
+    val wasUpdated: Boolean = false,
+    val isLoading: Boolean = false,
+    val jwt: String = "",
+    val message: String = ""
+){
+    object Initial: ValidateResetPasswordState()
+    object Loading: ValidateResetPasswordState(isLoading = true)
+    class Success(updated: Boolean, token: String) : ValidateResetPasswordState(wasUpdated = updated, jwt = token)
+    class Failure(errorMessage: String) : ValidateResetPasswordState(message = errorMessage)
+}

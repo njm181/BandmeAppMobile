@@ -22,9 +22,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             BandmeAppMobileTheme {
                 //LoginEmailScren(viewModel = loginViewModel)
-                LoginPasswordScreen(viewModel = loginViewModel)
+                //LoginPasswordScreen(viewModel = loginViewModel)
                 //ValidateResetEmailScreen(viewModel = loginViewModel)
-                //ValidateResetCodeScreen(viewModel = loginViewModel)
+                ValidateResetCodeScreen(viewModel = loginViewModel)
             }
         }
     }

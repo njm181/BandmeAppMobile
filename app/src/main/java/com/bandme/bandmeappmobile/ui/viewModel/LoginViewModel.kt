@@ -3,18 +3,21 @@ package com.bandme.bandmeappmobile.ui.viewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bandme.bandmeappmobile.domain.useCase.login.*
+import com.bandme.bandmeappmobile.domain.utils.AppPreferences
 import com.bandme.bandmeappmobile.ui.utils.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class LoginViewModel (
+    private val preferences: AppPreferences,
     private val validateEmailUseCase: ValidateEmailUseCase,
     private val validateLoginUseCase: ValidateLoginUseCase,
     private val validateEmailResetPasswordUseCase: ValidateEmailResetPasswordUseCase,
     private val validateCodeResetPasswordUseCase: ValidateCodeResetPasswordUseCase,
     private val validateResetPasswordUseCase: ValidateResetPasswordUseCase
     ): ViewModel() {
+
 
     //region State Flows
 
@@ -48,10 +51,6 @@ class LoginViewModel (
     fun setIsResetPassword(isResetPassword: Boolean){
         _isResetPassword.value = isResetPassword
     }
-
-    private val _jwt = MutableStateFlow(value = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxZmRkY2U5ZjI0YjE0NzY0YjQzNThmOSIsImlhdCI6MTY2MTAwMTY1MCwiZXhwIjoxNjYxOTAxNjUwfQ.oHPpkZYiZkNPzH7FY6YnP-lh8Va2Z3rYGY3YAKWWXpQ")
-    val jwt: StateFlow<String> = _jwt
-
 
     private val _validateEmailStateFlow = MutableStateFlow<ValidateEmailState>(value = ValidateEmailState.Initial)
     val validateEmailStateFlow: StateFlow<ValidateEmailState> = _validateEmailStateFlow
@@ -114,6 +113,7 @@ class LoginViewModel (
             if(false){//result != null
                 if (result!!.isAuthenticated){
                     //todo almacenar el JWT en shared preferences usar KOIN y el email en el stateflow
+                    preferences.saveAuthorization(result.jwt.orEmpty())
                     _validateLoginStateFlow.value = ValidateLoginState.Success(isValidated = true)
                 }else{
                     _validateLoginStateFlow.value = ValidateLoginState.Success(isValidated = false)
@@ -144,8 +144,9 @@ class LoginViewModel (
             val result = validateCodeResetPasswordUseCase.invoke(code = code)
             if (result != null && result.isValid){
                 //todo almacenar el JWT en shared preferences usar KOIN y el email en el stateflow
-                _jwt.value = result.jwt
-                _validateCodeResetPasswordStateFlow.value = ValidateCodeResetPasswordState.Success(isValidated = result.isValid, token = result.jwt)
+                preferences.saveAuthorization(result.jwt)
+                println("TOKEN GUARDADO ==========> ${preferences.getAuthorization()}")
+                _validateCodeResetPasswordStateFlow.value = ValidateCodeResetPasswordState.Success(isValidated = result.isValid, token = preferences.getAuthorization())
             } else {
                 val message = if (!result?.message.isNullOrEmpty()) result?.message else "No pudimos validar tu código, vuelve a intentarlo más tarde."
                 _validateCodeResetPasswordStateFlow.value = ValidateCodeResetPasswordState.Failure(errorMessage = message.orEmpty())
@@ -156,9 +157,10 @@ class LoginViewModel (
     private fun validateUserResetPassword(newPassword: String) {
         viewModelScope.launch {
             _validateResetPasswordStateFlow.value = ValidateResetPasswordState.Loading
-            val result = validateResetPasswordUseCase.invoke(newPassword = newPassword, authorization = jwt.value)
+            val result = validateResetPasswordUseCase.invoke(newPassword = newPassword, authorization = preferences.getAuthorization())
             if (result != null && result.wasUpdated){
                 //todo almacenar el JWT en shared preferences usar KOIN y el email en el stateflow
+                preferences.saveAuthorization(result.jwt)
                 _validateResetPasswordStateFlow.value = ValidateResetPasswordState.Success(updated = result.wasUpdated, token = result.jwt)
             } else {
                 val message = if (!result?.message.isNullOrEmpty()) result?.message else "No pudimos validar tu nueva clave, vuelve a intentarlo más tarde."

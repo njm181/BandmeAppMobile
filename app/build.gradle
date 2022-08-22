@@ -13,6 +13,8 @@ android {
         versionCode 1
         versionName "1.0"
 
+        manifestPlaceholders = [redirectSchemeName: "spotify-sdk", redirectHostName: "auth"]
+
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary true
@@ -48,7 +50,16 @@ android {
 }
 
 dependencies {
-    //shared preferences
+    //Spotify
+    implementation "com.spotify.android:auth:2.0.2"
+
+    //LottieFiles
+    implementation 'com.airbnb.android:lottie-compose:4.0.0'
+
+    //Google Sign In
+    implementation 'com.google.android.gms:play-services-auth:20.2.0'
+
+    //Shared Preferences
     implementation "androidx.preference:preference-ktx:1.1.1"
 
     //Coroutines

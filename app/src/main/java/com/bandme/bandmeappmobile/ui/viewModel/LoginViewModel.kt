@@ -110,8 +110,8 @@ class LoginViewModel (
         viewModelScope.launch {
             _validateLoginStateFlow.value = ValidateLoginState.Loading
             val result = validateLoginUseCase.invoke(email = lastEmailEntered.value, password = password)
-            if(false){//result != null
-                if (result!!.isAuthenticated){
+            if(result != null){
+                if (result.isAuthenticated){
                     //todo almacenar el JWT en shared preferences usar KOIN y el email en el stateflow
                     preferences.saveAuthorization(result.jwt.orEmpty())
                     _validateLoginStateFlow.value = ValidateLoginState.Success(isValidated = true)
@@ -143,9 +143,7 @@ class LoginViewModel (
             _validateCodeResetPasswordStateFlow.value = ValidateCodeResetPasswordState.Loading
             val result = validateCodeResetPasswordUseCase.invoke(code = code)
             if (result != null && result.isValid){
-                //todo almacenar el JWT en shared preferences usar KOIN y el email en el stateflow
                 preferences.saveAuthorization(result.jwt)
-                println("TOKEN GUARDADO ==========> ${preferences.getAuthorization()}")
                 _validateCodeResetPasswordStateFlow.value = ValidateCodeResetPasswordState.Success(isValidated = result.isValid, token = preferences.getAuthorization())
             } else {
                 val message = if (!result?.message.isNullOrEmpty()) result?.message else "No pudimos validar tu código, vuelve a intentarlo más tarde."

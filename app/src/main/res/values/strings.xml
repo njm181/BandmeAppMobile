@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">BandmeAppMobile</string>
+    <string name="spotify_client_id">28f2c16b039c4ef68fbbb9ef095a6c42</string>
 </resources>

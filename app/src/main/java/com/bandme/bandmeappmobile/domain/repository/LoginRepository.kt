@@ -1,9 +1,7 @@
 package com.bandme.bandmeappmobile.domain.repository
 
-import com.bandme.bandmeappmobile.domain.entity.UserValidateLogin
-import com.bandme.bandmeappmobile.domain.entity.ValidateCodeResetPassword
-import com.bandme.bandmeappmobile.domain.entity.ValidateEmailResetPassword
-import com.bandme.bandmeappmobile.domain.entity.ValidateResetPassword
+import com.bandme.bandmeappmobile.data.dto.login.request.ValidateGoogleRequest
+import com.bandme.bandmeappmobile.domain.entity.*
 
 interface LoginRepository {
     suspend fun validateEmail(email: String): Boolean?
@@ -15,4 +13,6 @@ interface LoginRepository {
     suspend fun validateCodeResetPassword(code: String): ValidateCodeResetPassword?
 
     suspend fun validateResetPassword(newPassword: String, authorization: String): ValidateResetPassword?
+
+    suspend fun validateLoginGoogle(accessToken: String): ValidateGoogle?
 }

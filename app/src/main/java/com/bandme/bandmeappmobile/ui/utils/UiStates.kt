@@ -1,5 +1,7 @@
 package com.bandme.bandmeappmobile.ui.utils
 
+import com.bandme.bandmeappmobile.data.dto.login.response.UserDataSocialMedia
+
 sealed class ValidateEmailState(
     val email: String = "",
     val isLoading: Boolean = false,
@@ -57,4 +59,20 @@ sealed class ValidateResetPasswordState(
     object Loading: ValidateResetPasswordState(isLoading = true)
     class Success(updated: Boolean, token: String) : ValidateResetPasswordState(wasUpdated = updated, jwt = token)
     class Failure(errorMessage: String) : ValidateResetPasswordState(message = errorMessage)
+}
+
+sealed class ValidateLoginGoogleState(
+    val existEmail: Boolean? = false,
+    val message: String? = "",
+    val jwt: String? = "",
+    val isLoading: Boolean = false,
+    val userData: UserDataSocialMedia? = null
+    ){
+    object Initial: ValidateLoginGoogleState()
+    object Loading: ValidateLoginGoogleState(isLoading = true)
+    class Success(emailValidated: Boolean?, messageValidated: String?, data: UserDataSocialMedia?, token: String?)
+        : ValidateLoginGoogleState(
+        existEmail = emailValidated,
+        message = messageValidated, jwt = token, userData = data)
+    class Failure(errorMessage: String) : ValidateLoginGoogleState(message = errorMessage)
 }

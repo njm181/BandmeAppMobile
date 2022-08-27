@@ -1,18 +1,9 @@
 package com.bandme.bandmeappmobile.data.repositoryImpl
 
-import com.bandme.bandmeappmobile.data.dto.login.request.ValidateCodeRequest
-import com.bandme.bandmeappmobile.data.dto.login.request.ValidateEmailRequest
-import com.bandme.bandmeappmobile.data.dto.login.request.ValidateLoginRequest
-import com.bandme.bandmeappmobile.data.dto.login.request.ValidateResetPasswordRequest
+import com.bandme.bandmeappmobile.data.dto.login.request.*
 import com.bandme.bandmeappmobile.data.service.LoginService
-import com.bandme.bandmeappmobile.data.utils.toDomainUserValidateLogin
-import com.bandme.bandmeappmobile.data.utils.toDomainValidateCodeResetPassword
-import com.bandme.bandmeappmobile.data.utils.toDomainValidateEmailResetPassword
-import com.bandme.bandmeappmobile.data.utils.toDomainValidateResetPassword
-import com.bandme.bandmeappmobile.domain.entity.UserValidateLogin
-import com.bandme.bandmeappmobile.domain.entity.ValidateCodeResetPassword
-import com.bandme.bandmeappmobile.domain.entity.ValidateEmailResetPassword
-import com.bandme.bandmeappmobile.domain.entity.ValidateResetPassword
+import com.bandme.bandmeappmobile.data.utils.*
+import com.bandme.bandmeappmobile.domain.entity.*
 import com.bandme.bandmeappmobile.domain.repository.LoginRepository
 
 class LoginRepositoryImpl(private val loginService: LoginService): LoginRepository {
@@ -91,4 +82,20 @@ class LoginRepositoryImpl(private val loginService: LoginService): LoginReposito
         }
         return resp
     }
+
+    override suspend fun validateLoginGoogle(accessToken: String): ValidateGoogle? {
+        var resp: ValidateGoogle? = try {
+            val response = loginService.validateLoginGoogle(accessToken = ValidateGoogleRequest(accessToken))
+            if (response.isSuccessful){
+                response.body()?.toDomainValidateGoogle()
+            }else{
+                null
+            }
+        }catch (exception: Exception){
+            println("Error al realizar la request: ${exception.message}")
+            null
+        }
+        return resp
+    }
+
 }

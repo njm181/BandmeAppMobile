@@ -109,13 +109,12 @@ class MainActivity : ComponentActivity() {
 
 
     private fun handleSignData(data: Intent?) {
-        // The Task returned from this call is always completed, no need to attach
-        // a listener.
         GoogleSignIn.getSignedInAccountFromIntent(data)
             .addOnCompleteListener {
                 println("isSuccessful ${it.isSuccessful}")
                 if (it.isSuccessful){
                     // user successfully logged-in
+                    loginViewModel.setGoogleAccessToken(it.result?.idToken.orEmpty())
                     println("ID TOKEN --> ${it.result?.idToken}")
                     println("ACCOUNT --> ${it.result?.account}")
                     println("DISPLAYNAME --> ${it.result?.displayName}")

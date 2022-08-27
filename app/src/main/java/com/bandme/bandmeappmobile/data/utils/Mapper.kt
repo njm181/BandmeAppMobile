@@ -1,13 +1,7 @@
 package com.bandme.bandmeappmobile.data.utils
 
-import com.bandme.bandmeappmobile.data.dto.login.response.ValidateCodeResetPasswordResponse
-import com.bandme.bandmeappmobile.data.dto.login.response.ValidateEmailResetPasswordResponse
-import com.bandme.bandmeappmobile.data.dto.login.response.ValidateLoginResponse
-import com.bandme.bandmeappmobile.data.dto.login.response.ValidateResetPasswordResponse
-import com.bandme.bandmeappmobile.domain.entity.UserValidateLogin
-import com.bandme.bandmeappmobile.domain.entity.ValidateCodeResetPassword
-import com.bandme.bandmeappmobile.domain.entity.ValidateEmailResetPassword
-import com.bandme.bandmeappmobile.domain.entity.ValidateResetPassword
+import com.bandme.bandmeappmobile.data.dto.login.response.*
+import com.bandme.bandmeappmobile.domain.entity.*
 
 fun ValidateLoginResponse.toDomainUserValidateLogin() : UserValidateLogin {
     return UserValidateLogin(
@@ -38,5 +32,14 @@ fun ValidateResetPasswordResponse.toDomainValidateResetPassword(): ValidateReset
         jwt = jwt,
         message = message,
         wasUpdated = wasUpdated
+    )
+}
+
+fun ValidateGoogleResponse.toDomainValidateGoogle(): ValidateGoogle {
+    return ValidateGoogle(
+        exist_email = exist_email,
+        jwt = jwt,
+        message = message,
+        user_data = user_data
     )
 }

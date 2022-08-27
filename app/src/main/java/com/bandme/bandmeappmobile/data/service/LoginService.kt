@@ -1,9 +1,6 @@
 package com.bandme.bandmeappmobile.data.service
 
-import com.bandme.bandmeappmobile.data.dto.login.request.ValidateCodeRequest
-import com.bandme.bandmeappmobile.data.dto.login.request.ValidateEmailRequest
-import com.bandme.bandmeappmobile.data.dto.login.request.ValidateLoginRequest
-import com.bandme.bandmeappmobile.data.dto.login.request.ValidateResetPasswordRequest
+import com.bandme.bandmeappmobile.data.dto.login.request.*
 import com.bandme.bandmeappmobile.data.dto.login.response.*
 import retrofit2.Response
 import retrofit2.http.Body
@@ -37,4 +34,9 @@ interface LoginService {
         @Header("auth-token") authorization: String,
         @Body newPassword: ValidateResetPasswordRequest
     ) : Response<ValidateResetPasswordResponse>
+
+    @POST("google")
+    suspend fun validateLoginGoogle(
+        @Body accessToken: ValidateGoogleRequest
+    ) : Response<ValidateGoogleResponse>
 }

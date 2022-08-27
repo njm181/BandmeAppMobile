@@ -15,7 +15,8 @@ class LoginViewModel (
     private val validateLoginUseCase: ValidateLoginUseCase,
     private val validateEmailResetPasswordUseCase: ValidateEmailResetPasswordUseCase,
     private val validateCodeResetPasswordUseCase: ValidateCodeResetPasswordUseCase,
-    private val validateResetPasswordUseCase: ValidateResetPasswordUseCase
+    private val validateResetPasswordUseCase: ValidateResetPasswordUseCase,
+    private val validateGoogleUseCase: ValidateGoogleUseCase
     ): ViewModel() {
 
 
@@ -29,6 +30,14 @@ class LoginViewModel (
 
     fun setLastEmailEntered(email: String){
         _lastEmailEntered.value = email
+    }
+
+    private val _googleAccessToken = MutableStateFlow(value = "")
+    val googleAccessToken: StateFlow<String> = _googleAccessToken
+
+    fun setGoogleAccessToken(accessToken: String){
+        _googleAccessToken.value = accessToken
+        googleLogin()
     }
 
     private val _registerPassword = MutableStateFlow(value = "")
@@ -51,6 +60,9 @@ class LoginViewModel (
     fun setIsResetPassword(isResetPassword: Boolean){
         _isResetPassword.value = isResetPassword
     }
+
+    private val _validateLoginGooleStateFlow = MutableStateFlow<ValidateLoginGoogleState>(value = ValidateLoginGoogleState.Initial)
+    val validateLoginGoogleStateFlow: StateFlow<ValidateLoginGoogleState> = _validateLoginGooleStateFlow
 
     private val _validateEmailStateFlow = MutableStateFlow<ValidateEmailState>(value = ValidateEmailState.Initial)
     val validateEmailStateFlow: StateFlow<ValidateEmailState> = _validateEmailStateFlow
@@ -93,6 +105,28 @@ class LoginViewModel (
     //endregion
 
     //region private functions
+    private fun googleLogin() {
+        println("ID TOKEN YA GUARDADO EN STATE FLOW: ${googleAccessToken.value}")
+        viewModelScope.launch {
+            _validateLoginGooleStateFlow.value = ValidateLoginGoogleState.Loading
+            val result = validateGoogleUseCase.invoke(googleAccessToken.value)
+            if (result != null){
+                //todo si email existe, es un logueo, asi que debo tener jwt
+                    //todo si no existe es un registro, debo guardar la data de userdata y mandar a
+                        //pantalla de seleccionar tipo de usuario
+
+                _validateLoginGooleStateFlow.value = ValidateLoginGoogleState.Success(
+                    emailValidated = result.exist_email,
+                    messageValidated = result.message,
+                    data = result.user_data,
+                    token = result.jwt
+                )
+            } else {
+                _validateLoginGooleStateFlow.value = ValidateLoginGoogleState.Failure(errorMessage = "No pudimos validar tu email, vuelve a intentarlo más tarde.")
+            }
+        }
+    }
+
     private fun validateEmail(email: String){
         viewModelScope.launch {
             _validateEmailStateFlow.value = ValidateEmailState.Loading

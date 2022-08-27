@@ -74,5 +74,12 @@ sealed class ValidateLoginGoogleState(
         : ValidateLoginGoogleState(
         existEmail = emailValidated,
         message = messageValidated, jwt = token, userData = data)
+    class SuccessIsLogin(token: String?): ValidateLoginGoogleState(jwt = token)
+    class SuccessIsRegister(data: UserDataSocialMedia?): ValidateLoginGoogleState(userData = data)
     class Failure(errorMessage: String) : ValidateLoginGoogleState(message = errorMessage)
+}
+
+sealed class LogOutUserState{
+    object Initial: LogOutUserState()
+    object LogOut: LogOutUserState()
 }

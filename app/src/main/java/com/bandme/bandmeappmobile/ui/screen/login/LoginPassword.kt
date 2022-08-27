@@ -27,7 +27,8 @@ import com.bandme.bandmeappmobile.ui.viewModel.LoginViewModel
 @Composable
 fun LoginPasswordScreen(
     viewModel: LoginViewModel,
-    onNavigateToSuccess: () -> Unit = {},
+    onNavigateToDashboard: () -> Unit = {},
+    onNavigateToSelectUserType: () -> Unit = {},
     onBackPress: () -> Unit = {}
 ) {
     //agregar reset password

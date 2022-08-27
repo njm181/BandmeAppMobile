@@ -1,5 +1,8 @@
 package com.bandme.bandmeappmobile.ui.viewModel
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bandme.bandmeappmobile.domain.useCase.login.*
@@ -21,6 +24,8 @@ class LoginViewModel (
 
 
     //region State Flows
+    var logOutState by mutableStateOf<LogOutUserState>(LogOutUserState.Initial)
+        private set
 
     private val _lastEmailEntered = MutableStateFlow(value = "nicolasjmolina1@gmail.com")
     val lastEmailEntered: StateFlow<String> = _lastEmailEntered
@@ -102,25 +107,32 @@ class LoginViewModel (
         validateUserResetPassword(newPassword = newPassword)
     }
 
+    fun logOut(){
+        logOutUser()
+    }
     //endregion
 
     //region private functions
+    private fun logOutUser(){
+        preferences.saveAuthorization("")
+        logOutState = LogOutUserState.LogOut
+    }
+
     private fun googleLogin() {
-        println("ID TOKEN YA GUARDADO EN STATE FLOW: ${googleAccessToken.value}")
         viewModelScope.launch {
             _validateLoginGooleStateFlow.value = ValidateLoginGoogleState.Loading
             val result = validateGoogleUseCase.invoke(googleAccessToken.value)
             if (result != null){
-                //todo si email existe, es un logueo, asi que debo tener jwt
-                    //todo si no existe es un registro, debo guardar la data de userdata y mandar a
-                        //pantalla de seleccionar tipo de usuario
-
-                _validateLoginGooleStateFlow.value = ValidateLoginGoogleState.Success(
-                    emailValidated = result.exist_email,
-                    messageValidated = result.message,
-                    data = result.user_data,
-                    token = result.jwt
-                )
+                if (result.exist_email == true){
+                    preferences.saveAuthorization(result.jwt.orEmpty())
+                    _validateLoginGooleStateFlow.value = ValidateLoginGoogleState.SuccessIsLogin(
+                        token = result.jwt
+                    )
+                }else{
+                    _validateLoginGooleStateFlow.value = ValidateLoginGoogleState.SuccessIsRegister(
+                        data = result.user_data
+                    )
+                }
             } else {
                 _validateLoginGooleStateFlow.value = ValidateLoginGoogleState.Failure(errorMessage = "No pudimos validar tu email, vuelve a intentarlo más tarde.")
             }

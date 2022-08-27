@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -12,21 +13,48 @@ import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.*
 import com.bandme.bandmeappmobile.R
 import com.bandme.bandmeappmobile.ui.theme.BandmeAppMobileTheme
+import com.bandme.bandmeappmobile.ui.utils.ValidateLoginGoogleState
+import com.bandme.bandmeappmobile.ui.viewModel.LoginViewModel
 
 @Composable
 fun WelcomeScreen(
     googleSignIn: () -> Unit = {},
     spotifySignIn: () -> Unit = {},
+    goToEmailSignIn: () -> Unit,
+    onSocialMediaLogin: () -> Unit,
+    onSocialMediaRegister: () -> Unit,
+    viewModel: LoginViewModel
 ) {
+
+    val googleResponse = viewModel.validateLoginGoogleStateFlow.collectAsState()
+    when(googleResponse.value){
+        is ValidateLoginGoogleState.SuccessIsRegister -> {
+            //go to select user type
+            println("GOOGLE TIENE CUENTA ===> GO TO SELECT USER TYPE")
+        }
+        is ValidateLoginGoogleState.SuccessIsLogin -> {
+            //go to dashboard
+            println("GOOGLE TIENE CUENTA ===> GO TO DASHBOARD")
+        }
+        is ValidateLoginGoogleState.Failure -> {
+            //show modal error
+        }
+        else -> {/*to do nothing*/}
+    }
 
     WelcomeContent(
         googleSignIn = { googleSignIn() },
-        spotifySignIn = { spotifySignIn() }
+        spotifySignIn = { spotifySignIn() },
+        goToEmailSignIn = { goToEmailSignIn() }
     )
 }
 
 @Composable
-fun WelcomeContent(googleSignIn: () -> Unit = {}, spotifySignIn: () -> Unit = {}) {
+fun WelcomeContent(
+    googleSignIn: () -> Unit = {},
+    spotifySignIn: () -> Unit = {},
+    goToEmailSignIn: () -> Unit = {}
+) {
     Column(
         Modifier
             .fillMaxSize()
@@ -39,11 +67,10 @@ fun WelcomeContent(googleSignIn: () -> Unit = {}, spotifySignIn: () -> Unit = {}
         }
         Column(Modifier.weight(1f)) {
             Button(
-                onClick = {},
+                onClick = { goToEmailSignIn() },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
-                enabled = true//enableButton
+                    .height(50.dp)
             ) {
                 Text(text = "Iniciar con Email")
             }
@@ -53,7 +80,6 @@ fun WelcomeContent(googleSignIn: () -> Unit = {}, spotifySignIn: () -> Unit = {}
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                enabled = true//enableButton
             ) {
                 Text(text = "Iniciar con Google")
             }
@@ -63,7 +89,6 @@ fun WelcomeContent(googleSignIn: () -> Unit = {}, spotifySignIn: () -> Unit = {}
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                enabled = true//enableButton
             ) {
                 Text(text = "Iniciar con Spotify")
             }

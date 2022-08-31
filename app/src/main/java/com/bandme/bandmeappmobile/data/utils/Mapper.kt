@@ -43,3 +43,11 @@ fun ValidateGoogleResponse.toDomainValidateGoogle(): ValidateGoogle {
         user_data = user_data
     )
 }
+
+fun CreateAccountResponse.toDomainCreateAccount(): CreateAccount {
+    return CreateAccount(
+        email = payload.user_data.email,
+        accountCreated = accountCreated,
+        message = message
+    )
+}

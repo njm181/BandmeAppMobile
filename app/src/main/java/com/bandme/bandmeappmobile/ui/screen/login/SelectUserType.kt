@@ -14,14 +14,32 @@ import androidx.compose.ui.unit.sp
 import com.bandme.bandmeappmobile.R
 import com.bandme.bandmeappmobile.ui.theme.BandmeAppMobileTheme
 import com.bandme.bandmeappmobile.ui.theme.Gray600
+import com.bandme.bandmeappmobile.ui.viewModel.LoginViewModel
 
-@Composable
-fun SelectUserTypeScreen() {
-    SelectUserTypeContent()
+enum class UserType {
+    BANDA,
+    ARTISTA,
+    LUGAR
 }
 
 @Composable
-fun SelectUserTypeContent() {
+fun SelectUserTypeScreen(
+    viewModel: LoginViewModel
+) {
+
+    SelectUserTypeContent(
+        onUserTypeChange = { viewModel.setUserType(it) },
+        userSelected = viewModel.userTypeState,
+        onFinishRegister = { viewModel.createUserAccount() }
+    )
+}
+
+@Composable
+fun SelectUserTypeContent(
+    onUserTypeChange: (String) -> Unit,
+    userSelected: String,
+    onFinishRegister: () -> Unit
+) {
     Column(
         Modifier
             .fillMaxSize()
@@ -35,7 +53,12 @@ fun SelectUserTypeContent() {
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.Center
             ) {
-                UserTypeCard(userType = "Artista", R.drawable.ic_person_48, {}, true)
+                UserTypeCard(
+                    userType = UserType.ARTISTA,
+                    iconId = R.drawable.ic_person_48,
+                    onUserTypeChange = onUserTypeChange,
+                    userSelected = userSelected
+                )
             }
             Spacer(modifier = Modifier.height(16.dp))
             Row(
@@ -47,51 +70,62 @@ fun SelectUserTypeContent() {
                     verticalAlignment = Alignment.Top,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    UserTypeCard(userType = "Banda", R.drawable.ic_band_48, {}, true)
+                    UserTypeCard(
+                        userType = UserType.BANDA,
+                        iconId = R.drawable.ic_band_48,
+                        onUserTypeChange = onUserTypeChange,
+                        userSelected = userSelected
+                    )
 
                 }
                 Row(
                     verticalAlignment = Alignment.Top,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    UserTypeCard(userType = "Lugar", R.drawable.ic_location_on_48, {}, true)
+                    UserTypeCard(
+                        userType = UserType.LUGAR,
+                        iconId = R.drawable.ic_location_on_48,
+                        onUserTypeChange = onUserTypeChange,
+                        userSelected = userSelected
+                    )
 
                 }
             }
         }
 
         Button(
-            onClick = {  },
+            onClick = { onFinishRegister() },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
-            enabled = true//enableButton
+            enabled = !userSelected.isNullOrEmpty()
         ) {
             Text(text = "Finalizar")
         }
     }
 }
 
-@Preview(name = "default welcome")
+@Preview(name = "default")
 @Preview(name = "dark theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun SelectUserTypePreview() {
     BandmeAppMobileTheme {
-        SelectUserTypeContent()
+        SelectUserTypeContent({}, "ARTISTA") {}
     }
 }
 
 @Composable
-fun UserTypeCard(userType: String, iconId: Int, onClick: () -> Unit, isEnable: Boolean) {
+fun UserTypeCard(userType: UserType, iconId: Int, onUserTypeChange: (String) -> Unit, userSelected: String) {
     Button(
         modifier = Modifier
             .width(110.dp)
             .height(110.dp),
-        onClick = {},
+        onClick = {
+                  onUserTypeChange(userType.toString())
+        },
         elevation = ButtonDefaults.elevation(6.dp),
         colors = ButtonDefaults.buttonColors(
-            backgroundColor = MaterialTheme.colors.primaryVariant,
-            disabledBackgroundColor = Gray600
+            backgroundColor = if (userSelected == userType.toString()) MaterialTheme.colors.primaryVariant else Gray600
         ),
         shape = RoundedCornerShape(16)
     ) {
@@ -102,7 +136,7 @@ fun UserTypeCard(userType: String, iconId: Int, onClick: () -> Unit, isEnable: B
         ) {
             Icon(painter = painterResource(id = iconId), contentDescription = "icon user type")
             Spacer(Modifier.height(4.dp))
-            Text(text = userType, color = MaterialTheme.colors.onPrimary, fontSize = 13.sp)
+            Text(text = userType.toString(), color = MaterialTheme.colors.onPrimary, fontSize = 13.sp)
         }
     }
 }

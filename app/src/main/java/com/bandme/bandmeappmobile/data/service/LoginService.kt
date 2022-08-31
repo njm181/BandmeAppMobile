@@ -39,4 +39,9 @@ interface LoginService {
     suspend fun validateLoginGoogle(
         @Body accessToken: ValidateGoogleRequest
     ) : Response<ValidateGoogleResponse>
+
+    @POST("/create/account")
+    suspend fun createAccount(
+        @Body createAccountRequest: CreateAccountRequest
+    ) : Response<CreateAccountResponse>
 }

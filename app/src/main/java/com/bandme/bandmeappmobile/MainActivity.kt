@@ -122,10 +122,10 @@ class MainActivity : ComponentActivity() {
                 if (it.isSuccessful){
                     // user successfully logged-in
                     loginViewModel.setGoogleAccessToken(it.result?.idToken.orEmpty())
-                    println("ID TOKEN --> ${it.result?.idToken}")
+                    /*println("ID TOKEN --> ${it.result?.idToken}")
                     println("ACCOUNT --> ${it.result?.account}")
                     println("DISPLAYNAME --> ${it.result?.displayName}")
-                    println("EMAIL --> ${it.result?.email}")
+                    println("EMAIL --> ${it.result?.email}")*/
                 } else {
                     // authentication failed
                     println("exception ${it.exception}")

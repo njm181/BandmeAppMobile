@@ -83,3 +83,16 @@ sealed class LogOutUserState{
     object Initial: LogOutUserState()
     object LogOut: LogOutUserState()
 }
+
+sealed class CreateAccountState(
+    accountCreated: Boolean = false,
+    message: String = "",
+    emailSaved: String = "",
+    isLoading: Boolean = false
+){
+    object Initial: CreateAccountState()
+    object Loading: CreateAccountState(isLoading = true)
+    class Success(created: Boolean, email: String): CreateAccountState(accountCreated = created, emailSaved = email)
+    class Failure(errorMessage: String): CreateAccountState(message = errorMessage)
+
+}

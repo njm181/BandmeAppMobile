@@ -19,11 +19,21 @@ class LoginViewModel (
     private val validateEmailResetPasswordUseCase: ValidateEmailResetPasswordUseCase,
     private val validateCodeResetPasswordUseCase: ValidateCodeResetPasswordUseCase,
     private val validateResetPasswordUseCase: ValidateResetPasswordUseCase,
-    private val validateGoogleUseCase: ValidateGoogleUseCase
+    private val validateGoogleUseCase: ValidateGoogleUseCase,
+    private val createAccountUseCase: CreateAccountUseCase
     ): ViewModel() {
 
 
     //region State Flows
+    var providerState by mutableStateOf("")
+        private set
+
+    var userTypeState by mutableStateOf("")
+        private set
+    fun setUserType(type: String){
+        userTypeState = type
+    }
+
     var logOutState by mutableStateOf<LogOutUserState>(LogOutUserState.Initial)
         private set
 
@@ -46,7 +56,7 @@ class LoginViewModel (
     }
 
     private val _registerPassword = MutableStateFlow(value = "")
-    val registerPassword: StateFlow<String> = _registerPassword
+    private val registerPassword: StateFlow<String> = _registerPassword
 
     fun setRegisterPassword(password: String){
         _registerPassword.value = password
@@ -84,6 +94,8 @@ class LoginViewModel (
     private val _validateResetPasswordStateFlow = MutableStateFlow<ValidateResetPasswordState>(value = ValidateResetPasswordState.Initial)
     val validateResetPasswordStateFlow: StateFlow<ValidateResetPasswordState> = _validateResetPasswordStateFlow
 
+    private val _createAccountStateFlow = MutableStateFlow<CreateAccountState>(value = CreateAccountState.Initial)
+    val createAccountStateFlow: StateFlow<CreateAccountState> = _createAccountStateFlow
     //endregion
 
     //region public functions
@@ -105,6 +117,10 @@ class LoginViewModel (
 
     fun validateResetPassword(newPassword: String){
         validateUserResetPassword(newPassword = newPassword)
+    }
+
+    fun createUserAccount(){
+        createAccount()
     }
 
     fun logOut(){
@@ -132,6 +148,7 @@ class LoginViewModel (
                     _validateLoginGooleStateFlow.value = ValidateLoginGoogleState.SuccessIsRegister(
                         data = result.user_data
                     )
+                    providerState = "GOOGLE"
                 }
             } else {
                 _validateLoginGooleStateFlow.value = ValidateLoginGoogleState.Failure(errorMessage = "No pudimos validar tu email, vuelve a intentarlo más tarde.")
@@ -203,12 +220,29 @@ class LoginViewModel (
             _validateResetPasswordStateFlow.value = ValidateResetPasswordState.Loading
             val result = validateResetPasswordUseCase.invoke(newPassword = newPassword, authorization = preferences.getAuthorization())
             if (result != null && result.wasUpdated){
-                //todo almacenar el JWT en shared preferences usar KOIN y el email en el stateflow
                 preferences.saveAuthorization(result.jwt)
                 _validateResetPasswordStateFlow.value = ValidateResetPasswordState.Success(updated = result.wasUpdated, token = result.jwt)
             } else {
                 val message = if (!result?.message.isNullOrEmpty()) result?.message else "No pudimos validar tu nueva clave, vuelve a intentarlo más tarde."
                 _validateResetPasswordStateFlow.value = ValidateResetPasswordState.Failure(errorMessage = message.orEmpty())
+            }
+        }
+    }
+
+    private fun createAccount() {
+        viewModelScope.launch {
+            _createAccountStateFlow.value = CreateAccountState.Loading
+            val result = createAccountUseCase.invoke(
+                email = lastEmailEntered.value,
+                provider = providerState,
+                password = registerPassword.value,
+                userType = userTypeState
+            )
+            if (result != null && result.accountCreated){
+                _createAccountStateFlow.value = CreateAccountState.Success(created = result.accountCreated, email = result.email)
+            } else {
+                val message = if (!result?.message.isNullOrEmpty()) result?.message else "No pudimos crear tu cuenta, vuelve a intentarlo más tarde."
+                _createAccountStateFlow.value = CreateAccountState.Failure(errorMessage = message.orEmpty())
             }
         }
     }

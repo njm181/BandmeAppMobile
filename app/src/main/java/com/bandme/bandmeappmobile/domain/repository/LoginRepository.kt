@@ -1,6 +1,5 @@
 package com.bandme.bandmeappmobile.domain.repository
 
-import com.bandme.bandmeappmobile.data.dto.login.request.ValidateGoogleRequest
 import com.bandme.bandmeappmobile.domain.entity.*
 
 interface LoginRepository {
@@ -15,4 +14,11 @@ interface LoginRepository {
     suspend fun validateResetPassword(newPassword: String, authorization: String): ValidateResetPassword?
 
     suspend fun validateLoginGoogle(accessToken: String): ValidateGoogle?
+
+    suspend fun createAccount(
+        email: String,
+        provider: String,
+        password: String = "",
+        userType: String
+    ) : CreateAccount?
 }

@@ -1,4 +1,4 @@
-package com.bandme.bandmeappmobile.ui.screen
+package com.bandme.bandmeappmobile.ui.screen.login
 
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
@@ -31,10 +31,12 @@ fun WelcomeScreen(
         is ValidateLoginGoogleState.SuccessIsRegister -> {
             //go to select user type
             println("GOOGLE TIENE CUENTA ===> GO TO SELECT USER TYPE")
+            onSocialMediaRegister()
         }
         is ValidateLoginGoogleState.SuccessIsLogin -> {
             //go to dashboard
             println("GOOGLE TIENE CUENTA ===> GO TO DASHBOARD")
+            onSocialMediaLogin()
         }
         is ValidateLoginGoogleState.Failure -> {
             //show modal error

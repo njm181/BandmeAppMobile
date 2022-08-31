@@ -5,6 +5,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.bandme.bandmeappmobile.ui.screen.*
+import com.bandme.bandmeappmobile.ui.screen.login.WelcomeScreen
 import com.bandme.bandmeappmobile.ui.viewModel.LoginViewModel
 
 sealed class NavRoutes(val route: String) {

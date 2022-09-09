@@ -6,9 +6,15 @@ data class CreateAccountRequest(
     @SerializedName("email")
     val email: String,
     @SerializedName("password")
-    val password: String,
+    val password: String = "",
     @SerializedName("provider")
     val provider: String,
     @SerializedName("userType")
-    val userType: String
+    val userType: String,
+    @SerializedName("profilePhoto")
+    val profilePhoto: String = "",
+    @SerializedName("firstName")
+    val firstName: String = "",
+    @SerializedName("lastName")
+    val lastName: String = "",
 )

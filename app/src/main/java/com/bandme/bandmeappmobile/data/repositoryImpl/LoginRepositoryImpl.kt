@@ -102,8 +102,11 @@ class LoginRepositoryImpl(private val loginService: LoginService): LoginReposito
         email: String,
         provider: String,
         password: String,
-        userType: String
-    ) : CreateAccount? {
+        userType: String,
+        firstName: String,
+        lastName: String,
+        profilePhoto: String,
+        ) : CreateAccount? {
         var resp: CreateAccount? = try {
             val response = loginService.createAccount(
                 createAccountRequest = CreateAccountRequest(
@@ -111,10 +114,30 @@ class LoginRepositoryImpl(private val loginService: LoginService): LoginReposito
                     provider = provider,
                     userType = userType,
                     password = password,
+                    firstName = firstName,
+                    lastName = lastName,
+                    profilePhoto = profilePhoto
                 )
             )
             if (response.isSuccessful){
                 response.body()?.toDomainCreateAccount()
+            }else{
+                null
+            }
+        }catch (exception: Exception){
+            println("Error al realizar la request: ${exception.message}")
+            null
+        }
+        return resp
+    }
+
+    override suspend fun confirmAccount(code: String): ConfirmAccount? {
+        var resp: ConfirmAccount? = try {
+            val response = loginService.confirmAccount(
+                confirmAccountRequest = ConfirmAccountRequest(code)
+            )
+            if (response.isSuccessful){
+                response.body()?.toDomainConfirmAccount()
             }else{
                 null
             }

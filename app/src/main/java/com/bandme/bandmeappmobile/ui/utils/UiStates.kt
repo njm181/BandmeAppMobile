@@ -10,7 +10,9 @@ sealed class ValidateEmailState(
 ){
     object Initial: ValidateEmailState(email = "")
     object Loading: ValidateEmailState(isLoading = true)
-    class Success(existEmail: Boolean) : ValidateEmailState(isEmailValidated = existEmail)
+    class SuccessLogin() : ValidateEmailState()
+    class SuccessRegister() : ValidateEmailState()
+    class SuccessFinishRegister() : ValidateEmailState()
     class Failure(errorMessage: String) : ValidateEmailState(message = errorMessage)
 }
 
@@ -85,14 +87,26 @@ sealed class LogOutUserState{
 }
 
 sealed class CreateAccountState(
-    accountCreated: Boolean = false,
-    message: String = "",
-    emailSaved: String = "",
-    isLoading: Boolean = false
+    var accountCreated: Boolean = false,
+    var message: String = "",
+    var emailSaved: String = "",
+    var isLoading: Boolean = false
 ){
     object Initial: CreateAccountState()
     object Loading: CreateAccountState(isLoading = true)
     class Success(created: Boolean, email: String): CreateAccountState(accountCreated = created, emailSaved = email)
     class Failure(errorMessage: String): CreateAccountState(message = errorMessage)
+}
 
+sealed class ConfirmAccountState(
+    val confirmedAccount: Boolean = false,
+    val isLoading: Boolean = false,
+    val message: String = "",
+    val jwt: String? = "",
+){
+    object Initial: ConfirmAccountState()
+    object Loading: ConfirmAccountState(isLoading = true)
+    class Success(isValidated: Boolean, messageSuccess: String, token: String) : ConfirmAccountState(confirmedAccount = isValidated, message = messageSuccess, jwt = token)
+    class Failure(errorMessage: String) : ConfirmAccountState(message = errorMessage)
+    class FailureIsNotConfirmed(errorMessage: String) : ConfirmAccountState(message = errorMessage)
 }

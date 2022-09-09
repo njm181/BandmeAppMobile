@@ -11,4 +11,5 @@ val useCaseModule = module {
     factory { ValidateResetPasswordUseCase(get()) }
     factory { ValidateGoogleUseCase(get()) }
     factory { CreateAccountUseCase(get()) }
+    factory { ConfirmAccountUseCase(get()) }
 }

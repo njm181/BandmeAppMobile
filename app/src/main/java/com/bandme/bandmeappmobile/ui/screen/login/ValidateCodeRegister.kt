@@ -1,9 +1,12 @@
-package com.bandme.bandmeappmobile.ui.screen
+package com.bandme.bandmeappmobile.ui.screen.login
 
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
+import androidx.compose.material.Button
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -14,66 +17,60 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bandme.bandmeappmobile.ui.theme.BandmeAppMobileTheme
 import com.bandme.bandmeappmobile.ui.theme.Gray700
-import com.bandme.bandmeappmobile.ui.utils.ValidateCodeResetPasswordState
-import com.bandme.bandmeappmobile.ui.utils.ValidateEmailResetPasswordState
+import com.bandme.bandmeappmobile.ui.utils.ConfirmAccountState
 import com.bandme.bandmeappmobile.ui.viewModel.LoginViewModel
 
 @Composable
-fun ValidateResetCodeScreen(
-    viewModel: LoginViewModel? = null,
-    onNavigateToSuccess: () -> Unit = {},
-    onBackPress: () -> Unit = {}
+fun ValidateCodeRegisterScreen(
+    viewModel: LoginViewModel,
+    onNavigateToSuccess: () -> Unit,
+    onBackPress: () -> Boolean
 ) {
-
-    var result = viewModel?.validateCodeResetPasswordStateFlow?.collectAsState()
     var isError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
-    result?.value.let { response ->
-        println("RESPUESTA ===> : $response")
-        when(response){
-            is ValidateCodeResetPasswordState.Loading, ValidateCodeResetPasswordState.Initial -> {
+    var codeResult = viewModel.confirmAccountStateFlow.collectAsState()
+    codeResult.value.let {
+        when(it){
+            is ConfirmAccountState.Initial -> {
                 //progressbar
                 println("======= LOADING ========")
             }
-            is ValidateCodeResetPasswordState.Success -> {
+            is ConfirmAccountState.Success -> {
                 println("======= SUCESS ========")
                 //maybe true or false
-                if (response.isValid){
-                    println("JWT GUARDADO ======> ${response.jwt}")
-                    /*println("EMAIL GUARDADO ======> ${viewModel?.lastEmailResetPasswordEntered?.value}")
-                    validateEmailResult = response.emailValid*/
-                    viewModel?.setIsResetPassword(isResetPassword = true)
+                if (it.confirmedAccount){
                     if (isError) isError = false
-                    //navigate to success
+                    LaunchedEffect(Unit){
+                        onNavigateToSuccess()
+                    }
                 } else {
                     isError = true
-                    errorMessage = response.message
+                    errorMessage = it.message
                 }
-
             }
-            is ValidateCodeResetPasswordState.Failure -> {
+            is ConfirmAccountState.Failure -> {
                 //if is failure, should be shown a toast or modal with the error message
                 println("======= FAILURE ========")
                 isError = true
-                errorMessage = response.message
+                errorMessage = it.message
             }
             else -> {}
         }
     }
-
-    ValidateResetCodeContent(
-        onValidateResetCode = { viewModel?.validateCodeResetPassword(it) },
+    
+    ValidateCodeRegisterContent(
         isWrongCode = isError,
-        errorMessage = errorMessage
+        errorMessage = errorMessage,
+        onValidateCode = { viewModel.confirmUserAccount(it) }
     )
 }
 
 @Composable
-fun ValidateResetCodeContent(
+fun ValidateCodeRegisterContent(
     isWrongCode: Boolean = false,
     errorMessage: String = "",
-    onValidateResetCode: (String) -> Unit = {}
+    onValidateCode: (String) -> Unit = {}
 ) {
     var code by remember { mutableStateOf(TextFieldValue("")) }
     var enableButton by remember { mutableStateOf(false) }
@@ -84,7 +81,7 @@ fun ValidateResetCodeContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.SpaceBetween) {
         Column() {
-            Text(text = "En el email que ingreso recibirá un código de 4 digitos", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = Gray700)
+            Text(text = "Recibirá un código de 4 digitos en su email para activar su cuenta", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = Gray700)
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -109,7 +106,7 @@ fun ValidateResetCodeContent(
         }
         Button(
             onClick = {
-                onValidateResetCode(code.text)
+                onValidateCode(code.text)
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -119,17 +116,13 @@ fun ValidateResetCodeContent(
             Text(text = "Continuar")
         }
     }
-
 }
 
 @Preview(name = "default")
 @Preview(name = "dark theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-fun ValidateResetCodeContentPreview() {
-    BandmeAppMobileTheme() {
-        ValidateResetCodeContent(
-            isWrongCode = true,
-            errorMessage = "No pudimos validar tu código, vuelve a intentarlo más tarde."
-        )
+fun ValidateCodeRegisterPreview() {
+    BandmeAppMobileTheme {
+        ValidateCodeRegisterContent()
     }
 }

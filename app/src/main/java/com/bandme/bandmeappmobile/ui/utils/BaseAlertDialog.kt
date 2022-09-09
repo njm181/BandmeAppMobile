@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -17,36 +18,32 @@ import com.bandme.bandmeappmobile.ui.theme.BandmeAppMobileTheme
 
 @Composable
 fun BaseAlertDialog(
-    isVisible: Boolean = false,
+    show: Boolean,
     onDismissAction: () -> Unit,
-    onAffirmativeAction: () -> Unit = {},
-    title: String = "",
-    isFailure: Boolean = false,
-    description: String = "",
-    affirmativeTitle: String = "",
-    dismissTitle: String = ""
+    onAffirmativeAction: () -> Unit,
+    title: String,
+    isFailure: Boolean,
+    description: String,
+    affirmativeTitle: String,
+    dismissTitle: String
 ) {
-    if (isVisible) {
-        androidx.compose.material.AlertDialog(
+    if (show) {
+        AlertDialog(
             modifier = Modifier,
             shape = RoundedCornerShape(10.dp),
             onDismissRequest = { onDismissAction() },
             title = { Text(text = title, fontSize = 16.sp) },
             text = { Text(
-                text = if (isFailure){
-                    "Ocurrió un error inesperado, por favor vuelve a intentarlo más tarde."
-                }else{
-                     description
-                     },
-                textAlign = TextAlign.Justify,
-                fontSize = 14.sp)
+                    text = description
+                    ,textAlign = TextAlign.Justify,
+                    fontSize = 14.sp)
                    },
             dismissButton = {
                 Button(
                     onClick = { onDismissAction() },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(text = if (isFailure) "Intentar más tarde" else dismissTitle)
+                    Text(text = dismissTitle)
                 }
             },
             confirmButton = {
@@ -73,7 +70,7 @@ fun BaseAlertDialog(
 fun BaseAlertDialogPreview() {
     BandmeAppMobileTheme() {
         BaseAlertDialog(
-            isVisible = true,
+            show = true,
             onDismissAction = { /*TODO*/ },
             onAffirmativeAction = { /*TODO*/ },
             title = "Atención",
@@ -81,7 +78,8 @@ fun BaseAlertDialogPreview() {
                     " \nSi ya esta registrado vuelva a ingresarlo correctamente. " +
                     "\nSi no, puede registrarse ahora mismo.",
             affirmativeTitle = "Registrarme",
-            dismissTitle = "Volver a intentar"
+            dismissTitle = "Volver a intentar",
+            isFailure = false
         )
     }
 

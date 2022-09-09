@@ -63,7 +63,6 @@ fun LoginPasswordScreen(
 
             }
             is ValidateLoginState.Failure -> {
-                //if is failure, should be shown a toast or modal with the error message
                 println("======= FAILURE ========")
                 isFailure = true
             }
@@ -97,7 +96,6 @@ fun LoginPasswordScreen(
 
             }
             is ValidateResetPasswordState.Failure -> {
-                //if is failure, should be shown a toast or modal with the error message
                 println("======= FAILURE ========")
                 //isFailure = true
                 errorMessage = errorMessage
@@ -108,12 +106,28 @@ fun LoginPasswordScreen(
     }
     /**endregion Reset Password*/
 
+    BaseAlertDialog(
+        show = viewModel.showDialog,
+        isFailure = isFailure,
+        onDismissAction = { viewModel.setShowDialogVisibility(false) },
+        dismissTitle = "Volver a intentar",
+        title = "Atención",
+        description = "No se pudó validar el inicio de sesión. Por favor intente más tarde.",
+        affirmativeTitle = "Cerrar",
+        onAffirmativeAction = {
+            println("=============> CONFIRM ACTION: GO TO WELCOME <=============")
+        }
+    )
+
+
     LoginPasswordContent(
         isNewUser = viewModel.isNewUser.collectAsState().value,
-        onRegisterPassword = { viewModel.setRegisterPassword(it) },
+        onRegisterPassword = {
+            viewModel.setRegisterPassword(it)
+            onNavigateToSelectUserType()
+                             },
         onValidateUserLogin = { viewModel.validateUserLogin(it) },
         isWrongPassword = isWrongPassword,
-        isFailure = isFailure,
         errorMessage = errorMessage,
         isResetFailure = isResetFailure,
         isResetPassword = viewModel.isResetPassword.collectAsState().value,
@@ -128,7 +142,6 @@ fun LoginPasswordContent(
     onRegisterPassword: (String) -> Unit = {},
     isWrongPassword: Boolean = false,
     onValidateUserLogin: (String) -> Unit = {},
-    isFailure: Boolean = false,
     isResetPassword: Boolean = false,
     errorMessage: String = "",
     isResetFailure: Boolean = false,
@@ -140,20 +153,6 @@ fun LoginPasswordContent(
     var showRepeatedPassword by remember { mutableStateOf(false) }
     var comparePassword by remember { mutableStateOf(false) }
     var enableButton by remember { mutableStateOf(false) }
-
-    var openDialog by remember { mutableStateOf(isFailure) }
-
-    BaseAlertDialog(
-        isVisible = openDialog,
-        isFailure = isFailure,
-        onDismissAction = {
-            openDialog = !openDialog
-            println("=============> CONFIRM ACTION: GO TO WELCOME <=============")
-                          },
-        title = "Atención",
-        description = "No se pudó validar el inicio de sesión. Por favor intente más tarde.",
-        affirmativeTitle = "Cerrar",
-    )
 
     Column(
         Modifier

@@ -9,13 +9,19 @@ class CreateAccountUseCase(private val loginRepository: LoginRepositoryImpl) {
         email: String,
         provider: String,
         password: String,
-        userType: String
+        userType: String,
+        firstName: String,
+        lastName: String,
+        profilePhoto: String,
     ): CreateAccount?{
         return loginRepository.createAccount(
             email = email,
             provider = provider,
-            userType = userType,
             password = password,
+            userType = userType,
+            firstName = firstName,
+            lastName = lastName,
+            profilePhoto = profilePhoto,
         )
     }
 }

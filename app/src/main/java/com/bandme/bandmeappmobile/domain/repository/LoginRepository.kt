@@ -19,6 +19,11 @@ interface LoginRepository {
         email: String,
         provider: String,
         password: String = "",
-        userType: String
+        userType: String,
+        firstName: String = "",
+        lastName: String = "",
+        profilePhoto: String = ""
     ) : CreateAccount?
+
+    suspend fun confirmAccount(code: String): ConfirmAccount?
 }

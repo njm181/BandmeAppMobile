@@ -51,3 +51,11 @@ fun CreateAccountResponse.toDomainCreateAccount(): CreateAccount {
         message = message
     )
 }
+
+fun ConfirmAccountResponse.toDomainConfirmAccount(): ConfirmAccount {
+    return ConfirmAccount(
+        isConfirm = isConfirm,
+        jwt = jwt,
+        message = message
+    )
+}

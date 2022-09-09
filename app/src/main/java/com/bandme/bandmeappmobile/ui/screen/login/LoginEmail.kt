@@ -1,4 +1,4 @@
-package com.bandme.bandmeappmobile.ui.screen
+package com.bandme.bandmeappmobile.ui.screen.login
 
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
@@ -7,6 +7,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
@@ -21,12 +22,15 @@ import com.bandme.bandmeappmobile.ui.viewModel.LoginViewModel
 fun LoginEmailScreen(
     viewModel: LoginViewModel? = null,
     onNavigateToSuccess: () -> Unit = {},
-    onBackPress: () -> Unit = {}
+    onBackPress: () -> Unit = {},
+    onNavigateToFinishRegiter: () -> Unit = {}
 ) {
     var result = viewModel?.validateEmailStateFlow?.collectAsState()
-    var validateEmailResult by remember { mutableStateOf(false) }
     var isError by remember { mutableStateOf(false) }
     var isFailure by remember { mutableStateOf(false) }
+
+    var openDialog by rememberSaveable { mutableStateOf(false) }
+
 
     result?.value.let { response ->
         println("RESPUESTA ===> : $response")
@@ -35,22 +39,23 @@ fun LoginEmailScreen(
                 //progressbar
                 println("======= LOADING ========")
             }
-            is ValidateEmailState.Success -> {
-                println("======= SUCESS ========")
-                //maybe true or false
-                if (response.isEmailValidated){
-                    println("EMAIL GUARDADO ======> ${viewModel?.lastEmailEntered?.value}")
-                    //validateEmailResult = response.isEmailValidated
-                    if (isError) isError = false
-                    if (isFailure) isFailure = false
-                    //navigate to success
-                } else {
-                    isError = true
+            is ValidateEmailState.SuccessLogin -> {
+                println("======= SUCESS LOGIN========")
+                println("EMAIL GUARDADO ======> ${viewModel?.lastEmailEntered?.value}")
+                //validateEmailResult = response.isEmailValidated
+                if (isError) isError = false
+                if (isFailure) isFailure = false
+                LaunchedEffect(Unit){
+                    onNavigateToSuccess()
                 }
-
+            }
+            is ValidateEmailState.SuccessRegister -> {
+                isError = true
+            }
+            is ValidateEmailState.SuccessFinishRegister -> {
+                onNavigateToFinishRegiter()
             }
             is ValidateEmailState.Failure -> {
-                //if is failure, should be shown a toast or modal with the error message
                 println("======= FAILURE ========")
                 isFailure = true
             }
@@ -58,26 +63,45 @@ fun LoginEmailScreen(
         }
     }
 
-    LoginEmailContent(
-        onValidateEmail = { viewModel?.validateExistEmail(it) },
-        isEmailValidated = validateEmailResult,
-        isError = isError,
+    BaseAlertDialog(
+        show = viewModel!!.showDialog,
         isFailure = isFailure,
-        setIsNewUser = { viewModel?.setIsNewUser(it) }
+        onDismissAction = { viewModel.setShowDialogVisibility(false) },
+        onAffirmativeAction = {
+            println("CONFIRM ACTION <=============")
+            viewModel.setIsNewUser(true)
+            onNavigateToSuccess()
+        },
+        title = "Atención",
+        description = "El email ingresado no existe o es incorrecto." +
+                " \nSi ya esta registrado vuelva a ingresarlo correctamente. " +
+                "\nSi no, puede registrarse ahora mismo.",
+        affirmativeTitle = "Registrarme",
+        dismissTitle = "Volver a intentar"
     )
+
+    LoginEmailContent(
+        onValidateEmail = { viewModel.validateExistEmail(it) },
+        isError = isError,
+        setIsNewUser = { viewModel.setIsNewUser(true) },
+        isFailure = isFailure,
+        openDialog = openDialog,
+        onChangeOpenDialog = { openDialog = it }
+    )
+
 }
 
 @Composable
 fun LoginEmailContent(
     onValidateEmail: (String) -> Unit,
-    isEmailValidated: Boolean = false,
     isError: Boolean = false,
-    isFailure: Boolean = false,
     maxCharacters: Int = 60,
-    setIsNewUser: (Boolean) -> Unit = {}
+    setIsNewUser: (Boolean) -> Unit?,
+    isFailure: Boolean,
+    openDialog: Boolean,
+    onChangeOpenDialog: (Boolean) -> Unit
 ){
-    var email by remember { mutableStateOf(TextFieldValue("")) }
-    var openDialog by remember { mutableStateOf(isError) }
+    var email by remember { mutableStateOf(TextFieldValue("")) }//NO HABRE EL DIALOGGGGGG
     var enableButton by remember { mutableStateOf(false) }
 
     Column(
@@ -86,22 +110,7 @@ fun LoginEmailContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        BaseAlertDialog(
-            isVisible = openDialog,
-            isFailure = isFailure,
-            onDismissAction = { openDialog = !openDialog },
-            onAffirmativeAction = {
-                println("CONFIRM ACTION <=============")
-                setIsNewUser(true)
-                //go to create password
-                                  },
-            title = "Atención",
-            description = "El email ingresado no existe o es incorrecto." +
-                    " \nSi ya esta registrado vuelva a ingresarlo correctamente. " +
-                    "\nSi no, puede registrarse ahora mismo.",
-            affirmativeTitle = "Registrarme",
-            dismissTitle = "Volver a intentar"
-        )
+
 
         Row(Modifier.fillMaxWidth()) {
             OutlinedTextField(
@@ -147,8 +156,11 @@ fun LoginEmailContentPreview() {
     BandmeAppMobileTheme {
         LoginEmailContent(
             onValidateEmail = {},
-            isEmailValidated = true,
-            isError = false
+            isError = false,
+            setIsNewUser = {},
+            isFailure = false,
+            openDialog = false,
+            onChangeOpenDialog = {}
         )
     }
 }

@@ -4,15 +4,14 @@ import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.*
 import com.bandme.bandmeappmobile.R
 import com.bandme.bandmeappmobile.ui.theme.BandmeAppMobileTheme
+import com.bandme.bandmeappmobile.ui.utils.BaseAlertDialog
 import com.bandme.bandmeappmobile.ui.utils.ValidateLoginGoogleState
 import com.bandme.bandmeappmobile.ui.viewModel.LoginViewModel
 
@@ -25,24 +24,52 @@ fun WelcomeScreen(
     onSocialMediaRegister: () -> Unit,
     viewModel: LoginViewModel
 ) {
-
+    var isFailure by remember { mutableStateOf(false) }
+    var messageError by remember { mutableStateOf("") }
     val googleResponse = viewModel.validateLoginGoogleStateFlow.collectAsState()
-    when(googleResponse.value){
-        is ValidateLoginGoogleState.SuccessIsRegister -> {
-            //go to select user type
-            println("GOOGLE TIENE CUENTA ===> GO TO SELECT USER TYPE")
-            onSocialMediaRegister()
+    googleResponse.value.let {
+        when(it){
+            is ValidateLoginGoogleState.SuccessIsRegister -> {
+                //go to select user type
+                println("GOOGLE TIENE CUENTA ===> GO TO SELECT USER TYPE")
+                LaunchedEffect(Unit){
+                    onSocialMediaRegister()
+                }
+                isFailure = false
+            }
+            is ValidateLoginGoogleState.SuccessIsLogin -> {
+                //go to dashboard
+                println("GOOGLE TIENE CUENTA ===> GO TO DASHBOARD") //TODO REVISAR EN EL SERVICIO EL ESTADO DE LA CUENTA, SI ESTA CREADA PERO DISABLE DEBE MANDARSE UN CODIGO NUEVO Y MANDAR A LA PANTALLA PARA INGRESARLO
+                LaunchedEffect(Unit){
+                    onSocialMediaLogin()
+                }
+                isFailure = false
+            }
+            is ValidateLoginGoogleState.Failure -> {
+                //show modal error
+                isFailure = true
+                messageError = it.message.orEmpty()
+
+            }
+            else -> {/*to do nothing*/}
         }
-        is ValidateLoginGoogleState.SuccessIsLogin -> {
-            //go to dashboard
-            println("GOOGLE TIENE CUENTA ===> GO TO DASHBOARD")
-            onSocialMediaLogin()
-        }
-        is ValidateLoginGoogleState.Failure -> {
-            //show modal error
-        }
-        else -> {/*to do nothing*/}
     }
+
+    BaseAlertDialog(
+        show = viewModel.showDialog,
+        isFailure = isFailure,
+        onDismissAction = {
+            viewModel.setShowDialogVisibility(false)
+            println("=============> FAILURE SOCIAL MEDIA LOGIN/REGISTER <=============")
+                          },
+        onAffirmativeAction = {
+            println("CONFIRM ACTION <=============")
+        },
+        title = "Atención",
+        description = messageError,
+        affirmativeTitle = "Registrarme",
+        dismissTitle = "Cerrar"
+    )
 
     WelcomeContent(
         googleSignIn = { googleSignIn() },
@@ -57,6 +84,7 @@ fun WelcomeContent(
     spotifySignIn: () -> Unit = {},
     goToEmailSignIn: () -> Unit = {}
 ) {
+
     Column(
         Modifier
             .fillMaxSize()

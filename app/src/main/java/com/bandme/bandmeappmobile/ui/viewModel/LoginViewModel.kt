@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bandme.bandmeappmobile.data.dto.login.response.UserDataSocialMedia
 import com.bandme.bandmeappmobile.domain.useCase.login.*
 import com.bandme.bandmeappmobile.domain.utils.AppPreferences
 import com.bandme.bandmeappmobile.ui.utils.*
@@ -20,11 +21,18 @@ class LoginViewModel (
     private val validateCodeResetPasswordUseCase: ValidateCodeResetPasswordUseCase,
     private val validateResetPasswordUseCase: ValidateResetPasswordUseCase,
     private val validateGoogleUseCase: ValidateGoogleUseCase,
-    private val createAccountUseCase: CreateAccountUseCase
+    private val createAccountUseCase: CreateAccountUseCase,
+    private val confirmAccountUseCase: ConfirmAccountUseCase
     ): ViewModel() {
 
 
-    //region State Flows
+    //region State
+    var showDialog by mutableStateOf(false)
+        private set
+    fun setShowDialogVisibility(value: Boolean){
+        showDialog = value
+    }
+
     var providerState by mutableStateOf("")
         private set
 
@@ -37,15 +45,18 @@ class LoginViewModel (
     var logOutState by mutableStateOf<LogOutUserState>(LogOutUserState.Initial)
         private set
 
-    private val _lastEmailEntered = MutableStateFlow(value = "nicolasjmolina1@gmail.com")
+    private val _lastEmailEntered = MutableStateFlow(value = "")
     val lastEmailEntered: StateFlow<String> = _lastEmailEntered
 
-    private val _lastEmailResetPasswordEntered = MutableStateFlow(value = "nicolasjmolina1@gmail.com")
+    /*private val _socialMediaDataRegister = MutableStateFlow<UserDataSocialMedia?>(value = null)
+    val socialMediaDataRegister: StateFlow<UserDataSocialMedia?> = _socialMediaDataRegister*/
+
+    private val _lastEmailResetPasswordEntered = MutableStateFlow(value = "")
     val lastEmailResetPasswordEntered: StateFlow<String> = _lastEmailResetPasswordEntered
 
-    fun setLastEmailEntered(email: String){
+    /*fun setLastEmailEntered(email: String){
         _lastEmailEntered.value = email
-    }
+    }*/
 
     private val _googleAccessToken = MutableStateFlow(value = "")
     val googleAccessToken: StateFlow<String> = _googleAccessToken
@@ -66,6 +77,7 @@ class LoginViewModel (
     val isNewUser: StateFlow<Boolean> = _isNewUser
 
     fun setIsNewUser(isNew: Boolean){
+        println("SE REGISTRA NUEVO USUARIO EN TRUE")
         _isNewUser.value = isNew
     }
 
@@ -96,6 +108,9 @@ class LoginViewModel (
 
     private val _createAccountStateFlow = MutableStateFlow<CreateAccountState>(value = CreateAccountState.Initial)
     val createAccountStateFlow: StateFlow<CreateAccountState> = _createAccountStateFlow
+
+    private val _confirmAccountStateFlow = MutableStateFlow<ConfirmAccountState>(value = ConfirmAccountState.Initial)
+    val confirmAccountStateFlow: StateFlow<ConfirmAccountState> = _confirmAccountStateFlow
     //endregion
 
     //region public functions
@@ -119,8 +134,12 @@ class LoginViewModel (
         validateUserResetPassword(newPassword = newPassword)
     }
 
-    fun createUserAccount(){
+    fun createUserAccount() {
         createAccount()
+    }
+
+    fun confirmUserAccount(code: String){
+        confirmAccount(code)
     }
 
     fun logOut(){
@@ -148,6 +167,7 @@ class LoginViewModel (
                     _validateLoginGooleStateFlow.value = ValidateLoginGoogleState.SuccessIsRegister(
                         data = result.user_data
                     )
+                    //_socialMediaDataRegister.value = result.user_data
                     providerState = "GOOGLE"
                 }
             } else {
@@ -161,8 +181,14 @@ class LoginViewModel (
             _validateEmailStateFlow.value = ValidateEmailState.Loading
             val result = validateEmailUseCase.invoke(email = email)
             if (result != null){
-                if (result) _lastEmailEntered.value = email
-               _validateEmailStateFlow.value = ValidateEmailState.Success(existEmail = result)
+                _lastEmailEntered.value = email
+                if (result){
+                    //filtrar por un campo que indique que falta completar registro
+                    _validateEmailStateFlow.value = ValidateEmailState.SuccessLogin()
+                } else {
+                    _validateEmailStateFlow.value = ValidateEmailState.SuccessRegister()
+                    showDialog = true
+                }
             } else {
                 _validateEmailStateFlow.value = ValidateEmailState.Failure(errorMessage = "No pudimos validar tu email, vuelve a intentarlo más tarde.")
             }
@@ -175,7 +201,6 @@ class LoginViewModel (
             val result = validateLoginUseCase.invoke(email = lastEmailEntered.value, password = password)
             if(result != null){
                 if (result.isAuthenticated){
-                    //todo almacenar el JWT en shared preferences usar KOIN y el email en el stateflow
                     preferences.saveAuthorization(result.jwt.orEmpty())
                     _validateLoginStateFlow.value = ValidateLoginState.Success(isValidated = true)
                 }else{
@@ -233,16 +258,40 @@ class LoginViewModel (
         viewModelScope.launch {
             _createAccountStateFlow.value = CreateAccountState.Loading
             val result = createAccountUseCase.invoke(
-                email = lastEmailEntered.value,
-                provider = providerState,
+                email = if (lastEmailEntered.value.isEmpty()) validateLoginGoogleStateFlow.value.userData?.email.orEmpty() else lastEmailEntered.value,
+                provider = if (providerState.isEmpty()) "EMAIL" else providerState ,
                 password = registerPassword.value,
-                userType = userTypeState
+                userType = userTypeState,
+                firstName = validateLoginGoogleStateFlow.value.userData?.firstName.orEmpty(),
+                lastName = validateLoginGoogleStateFlow.value.userData?.lastName.orEmpty(),
+                profilePhoto = validateLoginGoogleStateFlow.value.userData?.profilePhoto.orEmpty()
             )
             if (result != null && result.accountCreated){
                 _createAccountStateFlow.value = CreateAccountState.Success(created = result.accountCreated, email = result.email)
             } else {
                 val message = if (!result?.message.isNullOrEmpty()) result?.message else "No pudimos crear tu cuenta, vuelve a intentarlo más tarde."
                 _createAccountStateFlow.value = CreateAccountState.Failure(errorMessage = message.orEmpty())
+            }
+        }
+    }
+
+    private fun confirmAccount(code: String){
+        viewModelScope.launch {
+            _confirmAccountStateFlow.value = ConfirmAccountState.Loading
+            val result = confirmAccountUseCase.invoke(code = code)
+            if (result != null){
+                if (result.isConfirm){
+                    preferences.saveAuthorization(result.jwt)
+                    _confirmAccountStateFlow.value = ConfirmAccountState.Success(
+                        isValidated = result.isConfirm,
+                        messageSuccess = result.message,
+                        token = result.jwt
+                    )
+                }else{
+                    _confirmAccountStateFlow.value = ConfirmAccountState.FailureIsNotConfirmed(errorMessage = result.message)
+                }
+            } else {
+                _confirmAccountStateFlow.value = ConfirmAccountState.Failure(errorMessage = "No pudimos confirmar tu cuenta, vuelve a intentarlo más tarde.")
             }
         }
     }

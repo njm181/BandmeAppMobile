@@ -4,7 +4,7 @@ import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.sp
 import com.bandme.bandmeappmobile.R
 import com.bandme.bandmeappmobile.ui.theme.BandmeAppMobileTheme
 import com.bandme.bandmeappmobile.ui.theme.Gray600
+import com.bandme.bandmeappmobile.ui.utils.BaseAlertDialog
+import com.bandme.bandmeappmobile.ui.utils.CreateAccountState
 import com.bandme.bandmeappmobile.ui.viewModel.LoginViewModel
 
 enum class UserType {
@@ -24,8 +26,59 @@ enum class UserType {
 
 @Composable
 fun SelectUserTypeScreen(
-    viewModel: LoginViewModel
+    viewModel: LoginViewModel,
+    onNavigateToSuccess: () -> Unit,
+    onBackPress: () -> Unit
 ) {
+
+    var isError by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+
+    var createResult = viewModel.createAccountStateFlow.collectAsState()
+    createResult.value.let {
+        when(it){
+            is CreateAccountState.Initial -> {
+                //progressbar
+                println("======= LOADING ========")
+            }
+            is CreateAccountState.Success -> {
+                println("======= SUCCESS ========")
+                if (it.accountCreated){
+                    if (isError) isError = false
+                    LaunchedEffect(Unit){
+                        onNavigateToSuccess()
+                    }
+                }else{
+                    isError = true
+                    errorMessage = it.message
+                }
+            }
+            is CreateAccountState.Failure -> {
+                isError = true
+                errorMessage = it.message
+            }
+            else -> {}
+        }
+    }
+
+    BaseAlertDialog(
+        show = viewModel!!.showDialog,
+        isFailure = isError,
+        onDismissAction = {
+            viewModel.setShowDialogVisibility(false)
+            println("=============> FAILURE <=============")
+            //todo mandar a welcome y borrar stack
+                          },
+        onAffirmativeAction = {
+            println("CONFIRM ACTION <=============")
+            viewModel.setIsNewUser(true)
+            onNavigateToSuccess()
+        },
+        title = "Atención",
+        affirmativeTitle = "Registrarme",
+        description = errorMessage,
+        dismissTitle = "Cerrar",
+    )
 
     SelectUserTypeContent(
         onUserTypeChange = { viewModel.setUserType(it) },
@@ -110,7 +163,7 @@ fun SelectUserTypeContent(
 @Composable
 fun SelectUserTypePreview() {
     BandmeAppMobileTheme {
-        SelectUserTypeContent({}, "ARTISTA") {}
+        SelectUserTypeContent({}, "ARTISTA", {})
     }
 }
 
